@@ -46,7 +46,7 @@ partial class Vector3
         CSharpGeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
 
         // We need to create a compilation with the required source code.
-        CSharpCompilation compilation = CSharpCompilation.Create(nameof(SourceGeneratorWithAdditionalFilesTests),
+        CSharpCompilation compilation = CSharpCompilation.Create(nameof(SourceGeneratorWithAttributesTests),
             [CSharpSyntaxTree.ParseText(VectorClassText)],
             [
                 // To support 'System.Attribute' inheritance, add reference to 'System.Private.CoreLib'.

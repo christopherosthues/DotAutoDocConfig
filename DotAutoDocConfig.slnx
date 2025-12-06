@@ -5,11 +5,20 @@
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
   </Folder>
+  <Folder Name="/DotAutoDocConfig/">
+    <Project Path="DotAutoDocConfig.Core/DotAutoDocConfig.Core.csproj" />
+    <Project Path="DotAutoDocConfig.SourceGenerator/DotAutoDocConfig.SourceGenerator.csproj" />
+    <Project Path="DotAutoDocConfig/DotAutoDocConfig.csproj" />
+  </Folder>
   <Folder Name="/Pipeline/">
     <File Path=".github/dependabot.yml" />
     <File Path=".github/workflows/dotnet.yml" />
   </Folder>
-  <Project Path="DotAutoDocConfig.SourceGenerator.Sample/DotAutoDocConfig.SourceGenerator.Sample.csproj" />
-  <Project Path="DotAutoDocConfig.SourceGenerator.Tests/DotAutoDocConfig.SourceGenerator.Tests.csproj" />
-  <Project Path="DotAutoDocConfig.SourceGenerator/DotAutoDocConfig.SourceGenerator.csproj" />
+  <Folder Name="/Samples/">
+    <Project Path="DotAutoDocConfig.Sample.Console/DotAutoDocConfig.Sample.Console.csproj" />
+    <Project Path="DotAutoDocConfig.SourceGenerator.Sample/DotAutoDocConfig.SourceGenerator.Sample.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="DotAutoDocConfig.SourceGenerator.Tests/DotAutoDocConfig.SourceGenerator.Tests.csproj" />
+  </Folder>
 </Solution>

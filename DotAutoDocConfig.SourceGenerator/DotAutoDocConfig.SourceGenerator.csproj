@@ -15,4 +15,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DotAutoDocConfig.Core\DotAutoDocConfig.Core.csproj" />
+  </ItemGroup>
 </Project>
