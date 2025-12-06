@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/AI/" />
+  <Folder Name="/Build/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/Pipeline/" />
+  <Project Path="DotAutoDocConfig.SourceGenerator.Sample/DotAutoDocConfig.SourceGenerator.Sample.csproj" />
+  <Project Path="DotAutoDocConfig.SourceGenerator.Tests/DotAutoDocConfig.SourceGenerator.Tests.csproj" />
+  <Project Path="DotAutoDocConfig.SourceGenerator/DotAutoDocConfig.SourceGenerator.csproj" />
+</Solution>
