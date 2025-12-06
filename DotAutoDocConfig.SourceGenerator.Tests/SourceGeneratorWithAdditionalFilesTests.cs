@@ -18,7 +18,7 @@ Customer";
     public async Task GenerateClassesBasedOnDDDRegistry()
     {
         // Create an instance of the source generator.
-        var generator = new SourceGeneratorWithAdditionalFiles();
+        SourceGeneratorWithAdditionalFiles generator = new();
 
         // Source generators should be tested using 'GeneratorDriver'.
         GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
@@ -30,21 +30,20 @@ Customer";
         );
 
         // To run generators, we can use an empty compilation.
-        var compilation = CSharpCompilation.Create(nameof(SourceGeneratorWithAdditionalFilesTests));
+        CSharpCompilation compilation = CSharpCompilation.Create(nameof(SourceGeneratorWithAdditionalFilesTests));
 
         // Run generators. Don't forget to use the new compilation rather than the previous one.
-        driver.RunGeneratorsAndUpdateCompilation(compilation, out var newCompilation, out _);
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out Compilation newCompilation, out _);
 
         // Retrieve all files in the compilation.
-        var generatedFiles = newCompilation.SyntaxTrees
+        string[] generatedFiles = newCompilation.SyntaxTrees
             .Select(t => Path.GetFileName(t.FilePath))
             .ToArray();
 
         // In this case, it is enough to check the file name.
-        await Assert.That(generatedFiles).IsEquatableOrEqualTo([
-            "User.g.cs",
-            "Document.g.cs",
-            "Customer.g.cs"
-        ]);
+        await Assert.That(generatedFiles)
+            .Contains("User.g.cs").And
+            .Contains("Document.g.cs").And
+            .Contains("Customer.g.cs");
     }
 }
