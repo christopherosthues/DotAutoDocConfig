@@ -5,7 +5,10 @@
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
   </Folder>
-  <Folder Name="/Pipeline/" />
+  <Folder Name="/Pipeline/">
+    <File Path=".github/dependabot.yml" />
+    <File Path=".github/workflows/dotnet.yml" />
+  </Folder>
   <Project Path="DotAutoDocConfig.SourceGenerator.Sample/DotAutoDocConfig.SourceGenerator.Sample.csproj" />
   <Project Path="DotAutoDocConfig.SourceGenerator.Tests/DotAutoDocConfig.SourceGenerator.Tests.csproj" />
   <Project Path="DotAutoDocConfig.SourceGenerator/DotAutoDocConfig.SourceGenerator.csproj" />
