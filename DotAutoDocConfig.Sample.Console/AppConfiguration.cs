@@ -6,7 +6,8 @@ namespace DotAutoDocConfig.Sample.Console;
 /// <summary>
 ///
 /// </summary>
-[Documentation(DocumentationFormat.Markdown | DocumentationFormat.AsciiDoc)]
+[Documentation(DocumentationFormat.Markdown, "docs/AppConfiguration.md")]
+[Documentation(DocumentationFormat.AsciiDoc, "docs/AppConfiguration.adoc")]
 public class AppConfiguration
 {
     public int MaxItems { get; set; } = 100;

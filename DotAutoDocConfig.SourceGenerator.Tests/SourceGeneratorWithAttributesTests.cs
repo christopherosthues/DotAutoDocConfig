@@ -40,7 +40,7 @@ partial class Vector3
     public async Task GenerateReportMethod()
     {
         // Create an instance of the source generator.
-        SourceGeneratorWithAttributes generator = new();
+        DocumentationSourceGenerator generator = new();
 
         // Source generators should be tested using 'GeneratorDriver'.
         CSharpGeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
