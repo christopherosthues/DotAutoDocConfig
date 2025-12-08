@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\DotAutoDocConfig\DotAutoDocConfig.csproj" />
+        <ProjectReference Include="..\DotAutoDocConfig.SourceGenerator\DotAutoDocConfig.SourceGenerator.csproj" OutputItemType="Analyzer" />
     </ItemGroup>
 
 </Project>
