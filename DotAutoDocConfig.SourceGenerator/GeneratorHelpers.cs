@@ -1,9 +1,9 @@
-// ...existing code...
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using DotAutoDocConfig.Core.ComponentModel;
+using System.Xml.Linq;
+// removed dependency on DotAutoDocConfig.Core to avoid loading that assembly at generator init
 using DotAutoDocConfig.SourceGenerator.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -13,15 +13,16 @@ namespace DotAutoDocConfig.SourceGenerator;
 internal static class GeneratorHelpers
 {
     // Collect documentation entries recursively for a root configuration class.
-    public static List<Models.DocumentationDataModel> CollectDocumentationEntries(INamedTypeSymbol root, Compilation compilation)
+    public static List<DocumentationDataModel> CollectDocumentationEntries(INamedTypeSymbol root, Compilation compilation)
     {
-        List<DocumentationDataModel> result = [];
+        List<DocumentationDataModel> result = new();
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
         Recurse(root, string.Empty, visited, root, result);
         return result;
     }
 
+    // Recurse stays a class method (not a local function).
     private static void Recurse(INamedTypeSymbol? current, string prefix, HashSet<INamedTypeSymbol> visited, INamedTypeSymbol root, List<DocumentationDataModel> result)
     {
         if (current is null)
@@ -29,16 +30,15 @@ internal static class GeneratorHelpers
         if (!visited.Add(current))
             return; // prevent cycles
 
-        foreach (IPropertySymbol? member in current.GetMembers().OfType<IPropertySymbol>())
+        foreach (IPropertySymbol member in current.GetMembers().OfType<IPropertySymbol>())
         {
             // Only public properties
             if (member.DeclaredAccessibility != Accessibility.Public)
                 continue;
 
-            // Skip if marked with ExcludeFromDocumentationAttribute
+            // Skip if marked with ExcludeFromDocumentationAttribute (compare by full name string to avoid a type reference)
             AttributeData? excludeAttribute = member.GetAttributes()
-                .FirstOrDefault(attr => attr.AttributeClass?.ToDisplayString() ==
-                                        "DotAutoDocConfig.Core.ComponentModel.Attributes.ExcludeFromDocumentationAttribute");
+                .FirstOrDefault(attr => attr.AttributeClass?.ToDisplayString() == "DotAutoDocConfig.Core.ComponentModel.Attributes.ExcludeFromDocumentationAttribute");
             if (excludeAttribute != null)
                 continue;
 
@@ -71,6 +71,7 @@ internal static class GeneratorHelpers
             }
 
             // Otherwise emit a documentation entry for this property
+            string exampleFromXml = GetExampleFromXml(member);
             DocumentationDataModel model = new()
             {
                 ClassSymbol = root,
@@ -78,7 +79,7 @@ internal static class GeneratorHelpers
                 ParameterType = member.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
                 DefaultValue = GetDefaultValue(member),
                 Summary = GetSummary(member),
-                ExampleValue = GetExampleValue(member.Type)
+                ExampleValue = string.IsNullOrEmpty(exampleFromXml) ? GetExampleValue(member.Type) : exampleFromXml
             };
 
             result.Add(model);
@@ -116,14 +117,78 @@ internal static class GeneratorHelpers
             string? xml = symbol.GetDocumentationCommentXml();
             if (string.IsNullOrEmpty(xml))
                 return string.Empty;
-            // naive strip xml tags
+
+            // Wrap into a root element to ensure valid XML for parsing
+            string wrapped = "<root>" + xml + "</root>";
+            try
+            {
+                XDocument doc = XDocument.Parse(wrapped);
+                XElement? summaryEl = doc.Root?.Element("summary");
+                if (summaryEl != null)
+                {
+                    string text = summaryEl.Value;
+                    return NormalizeWhitespace(StripXmlLikeText(text));
+                }
+            }
+            catch
+            {
+                // fall through to the naive fallback
+            }
+
+            // naive strip xml tags as fallback
             string stripped = Regex.Replace(xml, "<.*?>", string.Empty);
-            return Regex.Replace(stripped, @"\s+", " ").Trim();
+            return NormalizeWhitespace(stripped);
         }
         catch
         {
             return string.Empty;
         }
+    }
+
+    private static string GetExampleFromXml(ISymbol symbol)
+    {
+        try
+        {
+            string? xml = symbol.GetDocumentationCommentXml();
+            if (string.IsNullOrEmpty(xml))
+                return string.Empty;
+
+            string wrapped = "<root>" + xml + "</root>";
+            try
+            {
+                XDocument doc = XDocument.Parse(wrapped);
+                XElement? exEl = doc.Root?.Element("example");
+                if (exEl != null)
+                {
+                    string text = exEl.Value;
+                    return NormalizeWhitespace(StripXmlLikeText(text));
+                }
+            }
+            catch
+            {
+                // ignore and fallback
+            }
+
+            return string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    private static string StripXmlLikeText(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
+        // remove common xml tags if any remain
+        string withoutTags = Regex.Replace(input, "<.*?>", string.Empty);
+        return withoutTags.Trim();
+    }
+
+    private static string NormalizeWhitespace(string input)
+    {
+        return Regex.Replace(input, @"\s+", " ").Trim();
     }
 
     private static string GetDefaultValue(IPropertySymbol property)
@@ -216,11 +281,12 @@ internal static class GeneratorHelpers
         }
     }
 
-    public static string SanitizeFileName(string outputPath, DocumentationFormat format)
+    // Accept a byte for format (1 = AsciiDoc, 2 = Markdown) to avoid referencing DocumentationFormat
+    public static string SanitizeFileName(string outputPath, DocumentationSourceGenerator.LocalFormat format)
     {
         if (string.IsNullOrEmpty(outputPath))
         {
-            string ext = format == DocumentationFormat.AsciiDoc ? ".adoc" : ".md";
+            string ext = format == DocumentationSourceGenerator.LocalFormat.AsciiDoc ? ".adoc" : ".md";
             return "documentation" + ext;
         }
 
@@ -231,7 +297,7 @@ internal static class GeneratorHelpers
             if (string.IsNullOrEmpty(fileName))
                 fileName = outputPath.Replace(System.IO.Path.DirectorySeparatorChar, '_').Replace(System.IO.Path.AltDirectorySeparatorChar, '_');
             // ensure extension matches format
-            string extWanted = format == DocumentationFormat.AsciiDoc ? ".adoc" : ".md";
+            string extWanted = format == DocumentationSourceGenerator.LocalFormat.AsciiDoc ? ".adoc" : ".md";
             string? currentExt = System.IO.Path.GetExtension(fileName);
             if (!currentExt.Equals(extWanted, StringComparison.OrdinalIgnoreCase))
             {
@@ -243,7 +309,7 @@ internal static class GeneratorHelpers
         }
         catch
         {
-            return "documentation" + (format == DocumentationFormat.AsciiDoc ? ".adoc" : ".md");
+            return "documentation" + (format == DocumentationSourceGenerator.LocalFormat.AsciiDoc ? ".adoc" : ".md");
         }
     }
 }

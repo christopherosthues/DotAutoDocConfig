@@ -9,7 +9,7 @@ public static class AsciiDocGenerator
 {
     public static void GenerateAsciiDoc(StringBuilder sb, INamedTypeSymbol classSymbol, IEnumerable<DocumentationDataModel> entries)
     {
-        sb.AppendLine($"= Configuration Documentation");
+        sb.AppendLine("= Configuration Documentation");
         sb.AppendLine();
         sb.AppendLine($"== {classSymbol.Name}");
         sb.AppendLine();

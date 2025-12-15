@@ -1,10 +1,11 @@
-using DotAutoDocConfig.Core.ComponentModel;
+using System;
 
 namespace DotAutoDocConfig.SourceGenerator.Models;
 
 public class DocumentationOptionsDataModel
 {
-    public DocumentationFormat Format { get; set; }
+    // Use byte for format to avoid referencing the external DocumentationFormat enum from DotAutoDocConfig.Core
+    public byte Format { get; set; }
 
     public string OutputPath { get; set; } = null!;
 }
