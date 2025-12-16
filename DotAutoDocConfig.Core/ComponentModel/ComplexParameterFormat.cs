@@ -20,7 +20,7 @@ public enum ComplexParameterFormat
     /// Best for small objects (roughly 1–3 fields). Keeps a single table compact
     /// while still conveying structure.
     /// </remarks>
-    InlineJsonShort,
+    InlineJsonShort = 0,
 
     /// <summary>
     /// Render complex properties in separate sections/tables with their own rows.
@@ -29,5 +29,5 @@ public enum ComplexParameterFormat
     /// Recommended for larger or deeply nested objects. Improves readability at
     /// the cost of longer documents.
     /// </remarks>
-    SeparateTables
+    SeparateTables = 1
 }

@@ -17,12 +17,17 @@ namespace DotAutoDocConfig.SourceGenerator;
 [Generator(LanguageNames.CSharp)]
 public class DocumentationSourceGenerator : IIncrementalGenerator
 {
-    public enum LocalFormat : byte
+    private enum LocalFormat : byte
     {
-        None = 0,
-        AsciiDoc = 1,
-        Markdown = 2,
-        Html = 3
+        AsciiDoc = 0,
+        Markdown = 1,
+        Html = 2
+    }
+
+    protected enum ComplexParameterFormat : byte
+    {
+        InlineJsonShort = 0,
+        SeparateTables = 1
     }
 
     private static void LogInfo(SourceProductionContext context, string message, params object[] args)
@@ -82,7 +87,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
         Compilation compilation,
         ClassDeclarationSyntax classDeclarationSyntax)
     {
-        List<DocumentationOptionsDataModel> documentationDataModels = new();
+        List<DocumentationOptionsDataModel> documentationDataModels = [];
 
         // We need to get semantic model of the class to retrieve
         SemanticModel semanticModel = compilation.GetSemanticModel(classDeclarationSyntax.SyntaxTree);
@@ -194,10 +199,11 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
 
                 StringBuilder sb = new();
                 LocalFormat fmt = (LocalFormat)docOptions.Format;
+                ComplexParameterFormat complexFmt = (ComplexParameterFormat)docOptions.ComplexParameterFormat;
 
-                if (docOptions.ComplexParameterFormat == 1) // SeparateTables (0=InlineJsonShort, 1=SeparateTables)
+                if (complexFmt == ComplexParameterFormat.SeparateTables) // SeparateTables (0=InlineJsonShort, 1=SeparateTables)
                 {
-                    DocumentationTablesModel tables = GeneratorHelpers.CollectTables(classSymbol, compilation);
+                    DocumentationTablesModel tables = SeparateTableCollector.CollectDocumentationEntries(classSymbol);
 
                     // Prepare file names for each type table
                     Dictionary<INamedTypeSymbol, string> typeToFileName = new(SymbolEqualityComparer.Default);
@@ -257,7 +263,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
                 else
                 {
                     // InlineJsonShort: single file generation
-                    List<DocumentationDataModel> entries = GeneratorHelpers.CollectDocumentationEntries(classSymbol, compilation);
+                    List<DocumentationDataModel> entries = InlineTableCollector.CollectDocumentationEntries(classSymbol);
 
                     switch (fmt)
                     {

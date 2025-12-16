@@ -13,7 +13,7 @@ public sealed class TableRow
 public sealed class DocumentationTablesModel
 {
     // Rows for the root class table
-    public List<TableRow> RootRows { get; set; } = new();
+    public List<TableRow> RootRows { get; set; } = [];
 
     // Unique tables per complex type symbol
     public Dictionary<INamedTypeSymbol, List<TableRow>> TypeTables { get; set; } = new(SymbolEqualityComparer.Default);
