@@ -5,6 +5,7 @@ using System.IO;
 using DotAutoDocConfig.SourceGenerator.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 
 namespace DotAutoDocConfig.SourceGenerator;
@@ -24,6 +25,20 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
         Html = 3
     }
 
+    private static void LogInfo(SourceProductionContext context, string message, params object[] args)
+    {
+        // Emit an informational diagnostic that shows up in the build output
+        DiagnosticDescriptor descriptor = new(
+            id: "DDG000",
+            title: "DocumentationGeneratorInfo",
+            messageFormat: message,
+            category: "DocumentationGenerator",
+            defaultSeverity: DiagnosticSeverity.Info,
+            isEnabledByDefault: true);
+        Diagnostic diagnostic = Diagnostic.Create(descriptor, Location.None, args);
+        context.ReportDiagnostic(diagnostic);
+    }
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // Filter classes annotated with the [Documentation] attribute. Only filtered Syntax Nodes can trigger code generation.
@@ -34,57 +49,34 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
                 static (ctx, _) => (ClassDeclarationSyntax)ctx.TargetNode);
 
         // Try to read the project directory and project name from analyzer config global options (MSBuildProjectDirectory/MSBuildProjectName).
-        string projectDirectory = string.Empty;
-        string projectName = string.Empty;
-        var globalOptions = context.AnalyzerConfigOptionsProvider.GlobalOptions;
-        if (!globalOptions.TryGetValue("build_property.MSBuildProjectDirectory", out projectDirectory))
-        {
-            globalOptions.TryGetValue("build_property.ProjectDir", out projectDirectory);
-        }
-        globalOptions.TryGetValue("build_property.MSBuildProjectName", out projectName);
-
-        // Generate the source code; pass projectDirectory and projectName so we can resolve relative paths against the project/repo root and write to obj/DocsGenerated.
-        context.RegisterSourceOutput(context.CompilationProvider.Combine(provider.Collect()),
-            ((ctx, t) => GenerateCode(ctx, t.Left, t.Right, projectDirectory, projectName)));
-    }
-
-    // Helper: resolve repository/project root by walking up from a file path looking for .git, *.sln or Directory.Build.props
-#pragma warning disable RS1035 // Do not do file IO in analyzers
-    private static string ResolveRepositoryRoot(string? startFilePath)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(startFilePath))
-                return Directory.GetCurrentDirectory();
-
-            string? current = Path.GetDirectoryName(startFilePath);
-            while (!string.IsNullOrEmpty(current))
+        IncrementalValueProvider<(string projectDirectory, string projectName)> buildProps = context.AnalyzerConfigOptionsProvider
+            .Select(static (optsProvider, _) =>
             {
-                // check .git
-                if (Directory.Exists(Path.Combine(current, ".git")))
-                    return current;
-                // check solution files
-                string[] slnFiles = Directory.GetFiles(current, "*.sln");
-                if (slnFiles.Length > 0)
-                    return current;
-                // check for slnx or directory build props
-                if (File.Exists(Path.Combine(current, "DotAutoDocConfig.slnx")) || File.Exists(Path.Combine(current, "Directory.Build.props")))
-                    return current;
+                AnalyzerConfigOptions opts = optsProvider.GlobalOptions;
+                if (!opts.TryGetValue("build_property.MSBuildProjectDirectory", out string? projectDirectory))
+                {
+                    opts.TryGetValue("build_property.ProjectDir", out projectDirectory);
+                }
 
-                string parent = Path.GetDirectoryName(current);
-                if (string.IsNullOrEmpty(parent) || parent == current)
-                    break;
-                current = parent;
-            }
+                opts.TryGetValue("build_property.MSBuildProjectName", out string? projectName);
+                return (projectDirectory: projectDirectory ?? string.Empty, projectName: projectName ?? string.Empty);
+            });
 
-            return Directory.GetCurrentDirectory();
-        }
-        catch
-        {
-            return Directory.GetCurrentDirectory();
-        }
+        // Compilation, gefundene Klassen und Build-Props kombinieren
+        IncrementalValueProvider<((Compilation Left, ImmutableArray<ClassDeclarationSyntax> Right) Left, (string projectDirectory, string projectName) Right)> combined = context.CompilationProvider
+            .Combine(provider.Collect())
+            .Combine(buildProps);
+
+        context.RegisterSourceOutput(
+            combined,
+            static (spc, data) =>
+            {
+                Compilation compilation = data.Left.Left;
+                ImmutableArray<ClassDeclarationSyntax> classes = data.Left.Right;
+                (string projectDirectory, string projectName) = data.Right;
+                new DocumentationSourceGenerator().GenerateCode(spc, compilation, classes, projectDirectory, projectName);
+            });
     }
-#pragma warning restore RS1035
 
     private static (INamedTypeSymbol?, List<DocumentationOptionsDataModel>) GetDocumentationDataModels(
         Compilation compilation,
@@ -95,30 +87,60 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
         // We need to get semantic model of the class to retrieve
         SemanticModel semanticModel = compilation.GetSemanticModel(classDeclarationSyntax.SyntaxTree);
         if (semanticModel.GetDeclaredSymbol(classDeclarationSyntax) is not INamedTypeSymbol classSymbol)
+        {
             return (null, documentationDataModels);
+        }
+
         // Go through all attributes of the class.
         foreach (AttributeData attributeData in classSymbol.GetAttributes())
         {
             string attributeName = attributeData.AttributeClass?.ToDisplayString() ?? string.Empty;
             // Check the full name of the [Documentation] attribute.
             if (attributeName != "DotAutoDocConfig.Core.ComponentModel.Attributes.DocumentationAttribute")
+            {
                 continue;
+            }
+
             // Retrieve constructor arguments.
-            if (attributeData.ConstructorArguments.Length != 2)
+            if (attributeData.ConstructorArguments.Length < 2)
+            {
                 continue;
+            }
+
             // Read numeric value of the enum (as byte/int) to avoid referencing the external enum type.
             byte formatValue = 0;
             object? raw = attributeData.ConstructorArguments[0].Value;
             if (raw is int intVal)
+            {
                 formatValue = (byte)intVal;
+            }
             else if (raw is byte bVal)
+            {
                 formatValue = bVal;
+            }
 
             string outputPath = attributeData.ConstructorArguments[1].Value!.ToString() ?? string.Empty;
+
+            // Optional third argument: ComplexParameterFormat
+            byte complexFormat = 0; // default InlineJsonShort
+            if (attributeData.ConstructorArguments.Length >= 3)
+            {
+                object? rawComplex = attributeData.ConstructorArguments[2].Value;
+                if (rawComplex is int ci)
+                {
+                    complexFormat = (byte)ci;
+                }
+                else if (rawComplex is byte cb)
+                {
+                    complexFormat = cb;
+                }
+            }
+
             documentationDataModels.Add(new DocumentationOptionsDataModel
             {
                 Format = formatValue,
-                OutputPath = outputPath
+                OutputPath = outputPath,
+                ComplexParameterFormat = complexFormat
             });
         }
         return (classSymbol, documentationDataModels);
@@ -131,91 +153,228 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
     /// <param name="context">Source generation context used to add source files.</param>
     /// <param name="compilation">Compilation used to provide access to the Semantic Model.</param>
     /// <param name="classDeclarations">Nodes annotated with the [Report] attribute that trigger the generate action.</param>
+    /// <param name="projectDirectory">Directory of the project (.csproj) used to resolve relative output paths.</param>
+    /// <param name="projectName">MSBuild project name; currently used for diagnostics only.</param>
     private void GenerateCode(SourceProductionContext context, Compilation compilation,
         ImmutableArray<ClassDeclarationSyntax> classDeclarations, string projectDirectory, string projectName)
     {
         // Go through all filtered class declarations.
-        foreach (ClassDeclarationSyntax? classDeclarationSyntax in classDeclarations)
+        foreach (ClassDeclarationSyntax classDeclarationSyntax in classDeclarations)
         {
             // We need to get semantic model of the class to retrieve metadata.
             SemanticModel semanticModel = compilation.GetSemanticModel(classDeclarationSyntax.SyntaxTree);
 
             // Symbols allow us to get the compile-time information.
             if (semanticModel.GetDeclaredSymbol(classDeclarationSyntax) is not INamedTypeSymbol classSymbol)
+            {
                 continue;
+            }
 
             // determine repository root: prefer projectDirectory from analyzer config; otherwise fallback to the directory of the source file.
             string repoRoot = projectDirectory;
             if (string.IsNullOrEmpty(repoRoot))
             {
-                string? filePath = classDeclarationSyntax.SyntaxTree.FilePath;
+                string filePath = classDeclarationSyntax.SyntaxTree.FilePath;
                 repoRoot = Path.GetDirectoryName(filePath) ?? string.Empty;
             }
+
+            LogInfo(context, "RepoRoot resolved: {0}; ProjectName: {1}", repoRoot, string.IsNullOrEmpty(projectName) ? "(empty)" : projectName);
 
             // Get per-attribute documentation options
             (INamedTypeSymbol? symbol, List<DocumentationOptionsDataModel> docs) = GetDocumentationDataModels(compilation, classDeclarationSyntax);
             if (symbol is null)
-                continue;
-
-            foreach (DocumentationOptionsDataModel? docOptions in docs)
             {
-                // Collect flattened entries recursively
-                List<DocumentationDataModel> entries = GeneratorHelpers.CollectDocumentationEntries(classSymbol, compilation);
+                continue;
+            }
 
-                // Build content
+            foreach (DocumentationOptionsDataModel docOptions in docs)
+            {
+                // Log selected complex parameter format to surface behavior in build output
+                LogInfo(context, "ComplexParameterFormat: {0}", docOptions.ComplexParameterFormat);
+
                 StringBuilder sb = new();
                 LocalFormat fmt = (LocalFormat)docOptions.Format;
-                switch (fmt)
-                {
-                    case LocalFormat.AsciiDoc:
-                        DocumentationGenerators.AsciiDocGenerator.GenerateAsciiDoc(sb, classSymbol, entries);
-                        break;
-                    case LocalFormat.Markdown:
-                        DocumentationGenerators.MarkdownGenerator.Generate(sb, classSymbol, entries);
-                        break;
-                    default:
-                        DocumentationGenerators.MarkdownGenerator.Generate(sb, classSymbol, entries);
-                        break;
-                }
 
-                // Write the documentation to the output path specified in the attribute.
-                // If the path is relative, resolve it against the repository/project root and write into obj/DocsGenerated/$(projectName)/<requestedPath>.
-                // MSBuild target will later copy from obj/DocsGenerated to the final project location.
-                string requestedPath = docOptions.OutputPath ?? string.Empty;
-#pragma warning disable RS1035 // Do not do file IO in analyzers
-                try
+                if (docOptions.ComplexParameterFormat == 1) // SeparateTables (0=InlineJsonShort, 1=SeparateTables)
                 {
-                    if (Path.IsPathRooted(requestedPath))
+                    DocumentationTablesModel tables = GeneratorHelpers.CollectTables(classSymbol, compilation);
+
+                    // Prepare file names for each type table
+                    Dictionary<INamedTypeSymbol, string> typeToFileName = new(SymbolEqualityComparer.Default);
+                    foreach (KeyValuePair<INamedTypeSymbol, List<TableRow>> kvp in tables.TypeTables)
                     {
-                        // absolute path requested -> write directly there
-                        string fullPath = requestedPath;
-                        string? dir = Path.GetDirectoryName(fullPath);
-                        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                            Directory.CreateDirectory(dir);
-
-                        File.WriteAllText(fullPath, sb.ToString(), Encoding.UTF8);
+                        string ext = fmt == LocalFormat.AsciiDoc ? ".adoc" : ".md";
+                        string fileName = CreateSafeFileName(kvp.Key, ext);
+                        typeToFileName[kvp.Key] = fileName;
                     }
-                    else
+
+                    // Render root file with links to separate type files
+                    switch (fmt)
                     {
-                        string baseIntermediate = Path.GetFullPath(Path.Combine(repoRoot, "obj", "DocsGenerated", string.IsNullOrEmpty(projectName) ? "DefaultProject" : projectName));
-                        string fullIntermediatePath = Path.GetFullPath(Path.Combine(baseIntermediate, requestedPath));
-
-                        string? dir = Path.GetDirectoryName(fullIntermediatePath);
-                        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                            Directory.CreateDirectory(dir);
-
-                        File.WriteAllText(fullIntermediatePath, sb.ToString(), Encoding.UTF8);
+                        case LocalFormat.AsciiDoc:
+                            DocumentationGenerators.AsciiDocGenerator.GenerateAsciiDocRootWithFileLinks(sb, classSymbol, tables, typeToFileName);
+                            break;
+                        case LocalFormat.Markdown:
+                            DocumentationGenerators.MarkdownGenerator.GenerateMarkdownRootWithFileLinks(sb, classSymbol, tables, typeToFileName);
+                            break;
+                        default:
+                            DocumentationGenerators.MarkdownGenerator.GenerateMarkdownRootWithFileLinks(sb, classSymbol, tables, typeToFileName);
+                            break;
                     }
+
+                    // Write root file
+                    WriteFile(context, sb.ToString(), docOptions.OutputPath, projectDirectory, repoRoot);
+
+                    // Write each type table to its own file next to the root output (same directory)
+                    foreach (KeyValuePair<INamedTypeSymbol, List<TableRow>> kvp in tables.TypeTables)
+                    {
+                        string typeFileName = typeToFileName[kvp.Key];
+                        string rootPath = ResolveOutputPath(docOptions.OutputPath, projectDirectory, repoRoot);
+                        string? rootDir = Path.GetDirectoryName(rootPath);
+                        string typePath = Path.Combine(rootDir ?? string.Empty, typeFileName);
+
+                        StringBuilder subSb = new();
+                        switch (fmt)
+                        {
+                            case LocalFormat.AsciiDoc:
+                                DocumentationGenerators.AsciiDocGenerator.GenerateAsciiDocTypeTable(subSb, kvp.Key, kvp.Value);
+                                break;
+                            case LocalFormat.Markdown:
+                                DocumentationGenerators.MarkdownGenerator.GenerateMarkdownTypeTable(subSb, kvp.Key, kvp.Value);
+                                break;
+                            default:
+                                DocumentationGenerators.MarkdownGenerator.GenerateMarkdownTypeTable(subSb, kvp.Key, kvp.Value);
+                                break;
+                        }
+
+                        // Write sub file
+                        WriteResolvedFile(context, typePath, subSb.ToString());
+                    }
+
+                    // Move on to next docOptions
+                    continue;
                 }
-                catch (System.Exception ex)
+                else
                 {
-                    // If writing fails, emit a diagnostic but do not throw.
-                    DiagnosticDescriptor desc = new("DDG001", "DocumentationGeneratorWriteFailed", "Failed to write documentation file '{0}': {1}", "DocumentationGenerator", DiagnosticSeverity.Warning, true);
-                    Diagnostic diagnostic = Diagnostic.Create(desc, Location.None, requestedPath, ex.Message);
-                    context.ReportDiagnostic(diagnostic);
+                    // InlineJsonShort: single file generation
+                    List<DocumentationDataModel> entries = GeneratorHelpers.CollectDocumentationEntries(classSymbol, compilation);
+
+                    switch (fmt)
+                    {
+                        case LocalFormat.AsciiDoc:
+                            DocumentationGenerators.AsciiDocGenerator.GenerateAsciiDoc(sb, classSymbol, entries);
+                            break;
+                        case LocalFormat.Markdown:
+                            DocumentationGenerators.MarkdownGenerator.GenerateMarkdown(sb, classSymbol, entries);
+                            break;
+                        default:
+                            DocumentationGenerators.MarkdownGenerator.GenerateMarkdown(sb, classSymbol, entries);
+                            break;
+                    }
+
+                    // Write root file
+                    WriteFile(context, sb.ToString(), docOptions.OutputPath, projectDirectory, repoRoot);
                 }
-#pragma warning restore RS1035
             }
         }
+    }
+
+    private static string ResolveOutputPath(string requestedPath, string projectDirectory, string repoRoot)
+    {
+        if (Path.IsPathRooted(requestedPath))
+        {
+            return requestedPath;
+        }
+        string baseProjectRoot = !string.IsNullOrEmpty(projectDirectory) ? projectDirectory : repoRoot;
+        return Path.GetFullPath(Path.Combine(baseProjectRoot, requestedPath));
+    }
+
+    private static string CreateSafeFileName(INamedTypeSymbol symbol, string ext)
+    {
+        // Use fully qualified name to distinguish same-named types from different namespaces
+        string fq = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat); // e.g., global::Namespace.Type
+        // Remove leading 'global::'
+        if (fq.StartsWith("global::"))
+        {
+            fq = fq.Substring("global::".Length);
+        }
+        // Replace dots and plus (nested types) with dashes, keep alnum and dashes/underscores
+        StringBuilder sbName = new();
+        foreach (char c in fq)
+        {
+            if (char.IsLetterOrDigit(c))
+            {
+                sbName.Append(c);
+            }
+            else if (c == '.' || c == '_' || c == '+')
+            {
+                sbName.Append('-');
+            }
+        }
+        return sbName.ToString() + ext;
+    }
+
+    private static void WriteResolvedFile(SourceProductionContext context, string fullPath, string content)
+    {
+#pragma warning disable RS1035
+        try
+        {
+            string? dir = Path.GetDirectoryName(fullPath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+            File.WriteAllText(fullPath, content, Encoding.UTF8);
+            LogInfo(context, "Writing documentation (resolved): {0}", fullPath);
+        }
+        catch (System.Exception ex)
+        {
+            DiagnosticDescriptor desc = new("DDG001", "DocumentationGeneratorWriteFailed", "Failed to write documentation file '{0}': {1}", "DocumentationGenerator", DiagnosticSeverity.Warning, true);
+            Diagnostic diagnostic = Diagnostic.Create(desc, Location.None, fullPath, ex.Message);
+            context.ReportDiagnostic(diagnostic);
+        }
+#pragma warning restore RS1035
+    }
+
+    private static void WriteFile(SourceProductionContext context, string content, string requestedPath, string projectDirectory, string repoRoot)
+    {
+        LogInfo(context, "RequestedPath: {0}", requestedPath);
+#pragma warning disable RS1035
+        try
+        {
+            if (Path.IsPathRooted(requestedPath))
+            {
+                string fullPath = requestedPath;
+                string? dir = Path.GetDirectoryName(fullPath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                LogInfo(context, "Writing documentation (absolute): {0}", fullPath);
+                File.WriteAllText(fullPath, content, Encoding.UTF8);
+            }
+            else
+            {
+                string baseProjectRoot = !string.IsNullOrEmpty(projectDirectory) ? projectDirectory : repoRoot;
+                string fullProjectPath = Path.GetFullPath(Path.Combine(baseProjectRoot, requestedPath));
+
+                string? dir = Path.GetDirectoryName(fullProjectPath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                LogInfo(context, "Writing documentation (projectroot): Base={0}; FullPath={1}", baseProjectRoot, fullProjectPath);
+                File.WriteAllText(fullProjectPath, content, Encoding.UTF8);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            DiagnosticDescriptor desc = new("DDG001", "DocumentationGeneratorWriteFailed", "Failed to write documentation file '{0}': {1}", "DocumentationGenerator", DiagnosticSeverity.Warning, true);
+            Diagnostic diagnostic = Diagnostic.Create(desc, Location.None, requestedPath, ex.Message);
+            context.ReportDiagnostic(diagnostic);
+        }
+#pragma warning restore RS1035
     }
 }

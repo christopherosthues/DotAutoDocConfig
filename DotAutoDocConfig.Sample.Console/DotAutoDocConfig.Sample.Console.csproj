@@ -12,4 +12,8 @@
         <ProjectReference Include="..\DotAutoDocConfig.SourceGenerator\DotAutoDocConfig.SourceGenerator.csproj" OutputItemType="Analyzer" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="docs\" />
+    </ItemGroup>
+
 </Project>

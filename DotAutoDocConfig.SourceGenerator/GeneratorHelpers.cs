@@ -22,28 +22,124 @@ internal static class GeneratorHelpers
         return result;
     }
 
+    // New: Collect root rows and per-type tables (Tables mode). Deduplicates reused classes by symbol.
+    public static DocumentationTablesModel CollectTables(INamedTypeSymbol root, Compilation compilation)
+    {
+        DocumentationTablesModel model = new();
+        HashSet<INamedTypeSymbol> globalVisited = new(SymbolEqualityComparer.Default);
+        BuildRows(root, string.Empty, model.RootRows, model.TypeTables, globalVisited);
+        return model;
+    }
+
+    private static void BuildRows(INamedTypeSymbol current, string prefix, List<TableRow> rows,
+        Dictionary<INamedTypeSymbol, List<TableRow>> typeTables, HashSet<INamedTypeSymbol> globalVisited)
+    {
+        foreach (IPropertySymbol member in current.GetMembers().OfType<IPropertySymbol>())
+        {
+            if (member.DeclaredAccessibility != Accessibility.Public)
+            {
+                continue;
+            }
+
+            AttributeData? excludeAttribute = member.GetAttributes()
+                .FirstOrDefault(attr => attr.AttributeClass?.ToDisplayString() == "DotAutoDocConfig.Core.ComponentModel.Attributes.ExcludeFromDocumentationAttribute");
+            if (excludeAttribute != null)
+            {
+                continue;
+            }
+
+            string formattedName = member.Name;
+            string separator = ":"; // JsonShort notation
+            string parameterName = string.IsNullOrEmpty(prefix) ? formattedName : prefix + separator + formattedName;
+
+            ITypeSymbol propType = member.Type;
+            if (propType is IArrayTypeSymbol arrayType)
+            {
+                propType = arrayType.ElementType;
+            }
+            else if (propType is INamedTypeSymbol named && named.IsGenericType)
+            {
+                ITypeSymbol? firstArg = named.TypeArguments.FirstOrDefault();
+                if (firstArg != null && named.AllInterfaces.Any(i => i.MetadataName.Contains("IEnumerable")))
+                {
+                    propType = firstArg;
+                }
+            }
+
+            if (propType is INamedTypeSymbol namedType && ShouldRecurseInto(namedType))
+            {
+                // complex property -> add a row that links to namedType's table
+                DocumentationDataModel baseData = new()
+                {
+                    ClassSymbol = current,
+                    ParameterName = parameterName,
+                    ParameterType = member.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+                    DefaultValue = GetDefaultValue(member),
+                    Summary = GetSummary(member),
+                    ExampleValue = GetExampleValue(member.Type)
+                };
+
+                rows.Add(new TableRow { Data = baseData, ComplexTarget = namedType });
+
+                // ensure we build the table for namedType once
+                if (!typeTables.ContainsKey(namedType))
+                {
+                    List<TableRow> subRows = new();
+                    typeTables[namedType] = subRows;
+                    BuildRows(namedType, string.Empty, subRows, typeTables, globalVisited);
+                }
+
+                continue;
+            }
+
+            // leaf property -> plain row
+            string exampleFromXml = GetExampleFromXml(member);
+            DocumentationDataModel model = new()
+            {
+                ClassSymbol = current,
+                ParameterName = parameterName,
+                ParameterType = member.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+                DefaultValue = GetDefaultValue(member),
+                Summary = GetSummary(member),
+                ExampleValue = string.IsNullOrEmpty(exampleFromXml) ? GetExampleValue(member.Type) : exampleFromXml
+            };
+
+            rows.Add(new TableRow { Data = model, ComplexTarget = null });
+        }
+    }
+
     // Recurse stays a class method (not a local function).
     private static void Recurse(INamedTypeSymbol? current, string prefix, HashSet<INamedTypeSymbol> visited, INamedTypeSymbol root, List<DocumentationDataModel> result)
     {
         if (current is null)
+        {
             return;
+        }
+
         if (!visited.Add(current))
+        {
             return; // prevent cycles
+        }
 
         foreach (IPropertySymbol member in current.GetMembers().OfType<IPropertySymbol>())
         {
             // Only public properties
             if (member.DeclaredAccessibility != Accessibility.Public)
+            {
                 continue;
+            }
 
             // Skip if marked with ExcludeFromDocumentationAttribute (compare by full name string to avoid a type reference)
             AttributeData? excludeAttribute = member.GetAttributes()
                 .FirstOrDefault(attr => attr.AttributeClass?.ToDisplayString() == "DotAutoDocConfig.Core.ComponentModel.Attributes.ExcludeFromDocumentationAttribute");
             if (excludeAttribute != null)
+            {
                 continue;
+            }
 
-            string formattedName = FormatSegment(member.Name);
-            string parameterName = string.IsNullOrEmpty(prefix) ? formattedName : prefix + "." + formattedName;
+            string formattedName = member.Name;//FormatSegment(member.Name);
+            string separator = ":"; // JsonShort notation uses colon
+            string parameterName = string.IsNullOrEmpty(prefix) ? formattedName : prefix + separator + formattedName;
 
             ITypeSymbol propType = member.Type;
 
@@ -90,23 +186,38 @@ internal static class GeneratorHelpers
     {
         // Do not recurse into system types or enums or delegates
         if (type.TypeKind == TypeKind.Enum)
+        {
             return false;
+        }
+
         if (type.SpecialType != SpecialType.None)
+        {
             return false;
+        }
+
         // Common framework types we treat as leaves
         string ns = type.ContainingNamespace?.ToDisplayString() ?? string.Empty;
         if (ns.StartsWith("System", StringComparison.Ordinal))
+        {
             return false;
+        }
+
         // Treat records/classes defined in user's code as recurse candidates
         return true;
     }
 
-    public static string FormatSegment(string name)
+    private static string FormatSegment(string name)
     {
         if (string.IsNullOrEmpty(name))
+        {
             return name;
+        }
+
         if (name.Length == 1)
+        {
             return name.ToLowerInvariant();
+        }
+
         return char.ToLowerInvariant(name[0]) + name.Substring(1);
     }
 
@@ -116,7 +227,9 @@ internal static class GeneratorHelpers
         {
             string? xml = symbol.GetDocumentationCommentXml();
             if (string.IsNullOrEmpty(xml))
+            {
                 return string.Empty;
+            }
 
             // Wrap into a root element to ensure valid XML for parsing
             string wrapped = "<root>" + xml + "</root>";
@@ -151,7 +264,9 @@ internal static class GeneratorHelpers
         {
             string? xml = symbol.GetDocumentationCommentXml();
             if (string.IsNullOrEmpty(xml))
+            {
                 return string.Empty;
+            }
 
             string wrapped = "<root>" + xml + "</root>";
             try
@@ -180,16 +295,16 @@ internal static class GeneratorHelpers
     private static string StripXmlLikeText(string input)
     {
         if (string.IsNullOrEmpty(input))
+        {
             return string.Empty;
+        }
+
         // remove common xml tags if any remain
         string withoutTags = Regex.Replace(input, "<.*?>", string.Empty);
         return withoutTags.Trim();
     }
 
-    private static string NormalizeWhitespace(string input)
-    {
-        return Regex.Replace(input, @"\s+", " ").Trim();
-    }
+    private static string NormalizeWhitespace(string input) => Regex.Replace(input, @"\s+", " ").Trim();
 
     private static string GetDefaultValue(IPropertySymbol property)
     {
@@ -231,7 +346,9 @@ internal static class GeneratorHelpers
         try
         {
             if (type is null)
+            {
                 return string.Empty;
+            }
 
             if (type.TypeKind == TypeKind.Enum && type is INamedTypeSymbol enumType)
             {
@@ -263,12 +380,18 @@ internal static class GeneratorHelpers
 
             // Arrays & collections -> example JSON array
             if (type is IArrayTypeSymbol)
+            {
                 return "[ ]";
+            }
+
             if (type is INamedTypeSymbol named && named.IsGenericType && named.TypeArguments.Length == 1)
             {
                 ITypeSymbol firstArg = named.TypeArguments[0];
                 if (firstArg.SpecialType == SpecialType.System_String)
+                {
                     return "[ \"en\" ]";
+                }
+
                 return "[ ]";
             }
 
@@ -278,38 +401,6 @@ internal static class GeneratorHelpers
         catch
         {
             return string.Empty;
-        }
-    }
-
-    // Accept a byte for format (1 = AsciiDoc, 2 = Markdown) to avoid referencing DocumentationFormat
-    public static string SanitizeFileName(string outputPath, DocumentationSourceGenerator.LocalFormat format)
-    {
-        if (string.IsNullOrEmpty(outputPath))
-        {
-            string ext = format == DocumentationSourceGenerator.LocalFormat.AsciiDoc ? ".adoc" : ".md";
-            return "documentation" + ext;
-        }
-
-        // Take only the filename part and replace invalid chars
-        try
-        {
-            string? fileName = System.IO.Path.GetFileName(outputPath);
-            if (string.IsNullOrEmpty(fileName))
-                fileName = outputPath.Replace(System.IO.Path.DirectorySeparatorChar, '_').Replace(System.IO.Path.AltDirectorySeparatorChar, '_');
-            // ensure extension matches format
-            string extWanted = format == DocumentationSourceGenerator.LocalFormat.AsciiDoc ? ".adoc" : ".md";
-            string? currentExt = System.IO.Path.GetExtension(fileName);
-            if (!currentExt.Equals(extWanted, StringComparison.OrdinalIgnoreCase))
-            {
-                fileName = System.IO.Path.GetFileNameWithoutExtension(fileName) + extWanted;
-            }
-            // sanitize
-            string sanitized = Regex.Replace(fileName, "[^a-zA-Z0-9._-]", "_");
-            return sanitized;
-        }
-        catch
-        {
-            return "documentation" + (format == DocumentationSourceGenerator.LocalFormat.AsciiDoc ? ".adoc" : ".md");
         }
     }
 }
