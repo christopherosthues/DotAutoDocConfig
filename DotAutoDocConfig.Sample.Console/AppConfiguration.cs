@@ -7,7 +7,7 @@ namespace DotAutoDocConfig.Sample.Console;
 /// Represents application-level configuration options used by the sample console app.
 /// </summary>
 [Documentation(DocumentationFormat.Markdown, "docs/AppConfiguration.md", ComplexParameterFormat.SeparateTables)]
-[Documentation(DocumentationFormat.AsciiDoc, "docs/", includeNamespaces: false)]
+[Documentation(DocumentationFormat.AsciiDoc, "docs/", includeNamespaces: true)]
 public class AppConfiguration
 {
     /// <summary>

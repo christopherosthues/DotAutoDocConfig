@@ -21,9 +21,6 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
 {
     private const string DocumentationAttributeFullName = "DotAutoDocConfig.Core.ComponentModel.Attributes.DocumentationAttribute";
 
-    // Track used root output files to avoid collisions when includeNamespaces=false
-    private static readonly HashSet<string> UsedRootOutputFiles = new(StringComparer.OrdinalIgnoreCase);
-
     private static void LogInfo(SourceProductionContext context, string message, params object[] args)
     {
         // Emit an informational diagnostic that shows up in the build output
@@ -342,9 +339,6 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
 
         if (!looksLikeDirectory)
         {
-            // It's a file path, return as-is
-            // Ensure directory exists will be handled by WriteResolvedFile
-            UsedRootOutputFiles.Add(resolved);
             return resolved;
         }
 
@@ -352,15 +346,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
         string directory = resolved.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         string baseName = includeNamespaces ? CreateFileBaseNameWithNamespace(classSymbol) : classSymbol.Name;
 
-        // Ensure uniqueness to avoid collisions when includeNamespaces=false
         string candidate = Path.Combine(directory, baseName + ext);
-        int i = 2;
-        while (UsedRootOutputFiles.Contains(candidate))
-        {
-            candidate = Path.Combine(directory, baseName + "-" + i + ext);
-            i++;
-        }
-        UsedRootOutputFiles.Add(candidate);
         return candidate;
     }
 }
