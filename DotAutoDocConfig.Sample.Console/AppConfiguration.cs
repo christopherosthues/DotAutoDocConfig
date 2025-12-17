@@ -7,7 +7,7 @@ namespace DotAutoDocConfig.Sample.Console;
 /// Represents application-level configuration options used by the sample console app.
 /// </summary>
 [Documentation(DocumentationFormat.Markdown, "docs/AppConfiguration.md", ComplexParameterFormat.SeparateTables)]
-[Documentation(DocumentationFormat.AsciiDoc, "docs/AppConfiguration.adoc")]
+[Documentation(DocumentationFormat.AsciiDoc, "docs/", includeNamespaces: false)]
 public class AppConfiguration
 {
     /// <summary>
@@ -67,6 +67,7 @@ public class DatabaseConfiguration
     /// <summary>
     /// Maximum number of concurrent connections allowed by the application.
     /// </summary>
+    /// <example>5</example>
     public int MaxConnections { get; set; } = 10;
 
     /// <summary>
@@ -86,11 +87,18 @@ public class DatabaseConfiguration
 /// </summary>
 public enum LogLevel
 {
+    /// <summary>No logging output.</summary>
     None,
+    /// <summary>Very detailed diagnostic information, potentially high volume.</summary>
     Trace,
+    /// <summary>Fine-grained events useful for debugging.</summary>
     Debug,
+    /// <summary>Informational messages that highlight the progress of the application.</summary>
     Information,
+    /// <summary>Potentially harmful situations that are not necessarily errors.</summary>
     Warning,
+    /// <summary>Errors that prevent normal execution of a specific operation.</summary>
     Error,
+    /// <summary>Critical errors causing premature termination or severe failures.</summary>
     Critical,
 }

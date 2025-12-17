@@ -9,4 +9,7 @@ public class DocumentationOptionsDataModel
     public byte ComplexParameterFormat { get; set; }
 
     public string OutputPath { get; set; } = null!;
+
+    // New: whether to include namespaces in headings/labels
+    public bool IncludeNamespaces { get; set; }
 }

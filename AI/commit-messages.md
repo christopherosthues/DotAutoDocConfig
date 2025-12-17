@@ -31,11 +31,11 @@ Goal: Consistent, meaningful commit messages following Conventional Commits.
 
 ## Scopes (examples)
 
-- `core`, `generator`, `analyzer`, `runtime`, `cli`
-- `docs`, `tests`, `samples`
-- `build`, `ci`, `infrastructure`, `security`
+- `core`, `generator`, `analyzer`, `runtime`, `samples`
+- `docs`, `tests`, `build`, `ci`, `infrastructure`, `security`
 
-Pick the narrowest scope that fits. Prefer repo terms: `DotAutoDocConfig.Core` → `core`, `DotAutoDocConfig.SourceGenerator` → `generator`, etc.
+Use repo terms: `DotAutoDocConfig.Core` → `core`, `DotAutoDocConfig.SourceGenerator` → `generator`.
+Pick the narrowest scope that fits.
 
 ## Rules for Copilot
 
@@ -50,16 +50,16 @@ Pick the narrowest scope that fits. Prefer repo terms: `DotAutoDocConfig.Core` �
 ## Templates
 
 One-liner (small change):
-- `fix(generator): handle null attributes in symbol walker`
+- `fix(generator): parse <example> from xml correctly`
 
 With body:
-- Subject: `feat(analyzer)!: add rule to forbid sync IO in generators`
+- Subject: `feat(generator)!: add SeparateTables renderer`
 - Body:
-  - Why: prevent build deadlocks and timeouts
-  - What: new rule `GEN001`, default severity `warning`
-  - Migration: opt-out via `#pragma warning disable GEN001`
+  - Why: improve readability for complex nested configs
+  - What: new tables mode, links from root to sub tables
+  - Notes: includes per-type file emission and deduplication
 - Footer:
-  - `BREAKING CHANGE: builds may fail if severity is elevated to error`
+  - `BREAKING CHANGE: markdown structure changed for complex types`
   - `Closes: #321`
 
 Footer examples:
@@ -68,7 +68,7 @@ Footer examples:
 
 ## Good examples
 
-- `perf(generator): avoid allocations in syntax visitor`
+- `perf(generator): avoid allocations in symbol walker`
 - `refactor(core): extract service registration extension`
 - `docs(samples): add attribute usage examples for generator`
 
@@ -85,4 +85,3 @@ Footer examples:
 - Body explains why and impact (if not obvious)
 - Tests/docs updated (mention notable changes in body)
 - Issues and breaking changes in footer
-

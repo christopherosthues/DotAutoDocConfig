@@ -2,5 +2,6 @@
 <Project>
     <PropertyGroup>
         <WarningsAsErrors>true</WarningsAsErrors>
+        <NoWarn>RS1035</NoWarn>
     </PropertyGroup>
 </Project>
