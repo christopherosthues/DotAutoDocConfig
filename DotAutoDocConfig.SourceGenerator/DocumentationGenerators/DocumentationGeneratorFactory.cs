@@ -8,9 +8,9 @@ internal static class DocumentationGeneratorFactory
     {
         return format switch
         {
-            LocalFormat.Markdown => new MarkdownGenerator(),
             LocalFormat.AsciiDoc => new AsciiDocGenerator(),
-            _ => new MarkdownGenerator()
+            LocalFormat.Markdown => new MarkdownGenerator(),
+            _ => new AsciiDocGenerator()
         };
     }
 }

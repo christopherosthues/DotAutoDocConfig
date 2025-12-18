@@ -1,13 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
-using System.Linq;
-using System.Text;
-using DotAutoDocConfig.SourceGenerator.Collectors;
-using DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
 using DotAutoDocConfig.SourceGenerator.Extensions;
 using DotAutoDocConfig.SourceGenerator.Models;
+using DotAutoDocConfig.SourceGenerator.TableGenerators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -21,20 +17,6 @@ namespace DotAutoDocConfig.SourceGenerator;
 public class DocumentationSourceGenerator : IIncrementalGenerator
 {
     private const string DocumentationAttributeFullName = "DotAutoDocConfig.Core.ComponentModel.Attributes.DocumentationAttribute";
-
-    private static void LogInfo(SourceProductionContext context, string message, params object[] args)
-    {
-        // Emit an informational diagnostic that shows up in the build output
-        DiagnosticDescriptor descriptor = new(
-            id: DiagnosticIds.InfoType,
-            title: "DocumentationGeneratorInfo",
-            messageFormat: message,
-            category: "DocumentationGenerator",
-            defaultSeverity: DiagnosticSeverity.Info,
-            isEnabledByDefault: true);
-        Diagnostic diagnostic = Diagnostic.Create(descriptor, Location.None, args);
-        context.ReportDiagnostic(diagnostic);
-    }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -172,7 +154,9 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
                 repoRoot = Path.GetDirectoryName(filePath) ?? string.Empty;
             }
 
-            LogInfo(context, "RepoRoot resolved: {0}; ProjectName: {1}", repoRoot, string.IsNullOrEmpty(projectName) ? "(empty)" : projectName);
+#pragma warning disable CS8620
+            context.LogInfo("RepoRoot resolved: {0}; ProjectName: {1}", repoRoot, string.IsNullOrEmpty(projectName) ? "(empty)" : projectName);
+#pragma warning restore CS8620
 
             // Get per-attribute documentation options
             (INamedTypeSymbol? symbol, List<DocumentationOptionsDataModel> docs) = GetDocumentationDataModels(compilation, classDeclarationSyntax);
@@ -184,180 +168,15 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
             foreach (DocumentationOptionsDataModel docOptions in docs)
             {
                 // Log selected complex parameter format to surface behavior in build output
-                LogInfo(context, "ComplexParameterFormat: {0}", docOptions.ComplexParameterFormat);
+#pragma warning disable CS8620
+                context.LogInfo("ComplexParameterFormat: {0}", docOptions.ComplexParameterFormat);
+#pragma warning restore CS8620
 
-                StringBuilder sb = new();
-                LocalFormat fmt = (LocalFormat)docOptions.Format;
                 ComplexParameterFormat complexFmt = (ComplexParameterFormat)docOptions.ComplexParameterFormat;
-                IDocumentationGenerator documentationGenerator = DocumentationGeneratorFactory.CreateGenerator(fmt);
-                IConfigurationCollector configurationCollector = ConfigurationCollectorFactory.CreateCollector(complexFmt);
+                ITableGenerator tableGenerator = TableGeneratorFactory.CreateGenerator(complexFmt);
 
-                DocumentationTablesModel tables = configurationCollector.Collect(classSymbol);
-
-                if (complexFmt == ComplexParameterFormat.SeparateTables)
-                {
-                    // Prepare file names for each type table
-                    Dictionary<INamedTypeSymbol, string> typeToFileName = new(SymbolEqualityComparer.Default);
-                    HashSet<string> usedNames = new(StringComparer.OrdinalIgnoreCase);
-                    foreach (KeyValuePair<INamedTypeSymbol, List<TableRow>> kvp in tables.TypeTables)
-                    {
-                        string ext = fmt == LocalFormat.AsciiDoc ? ".adoc" : ".md";
-                        string baseName = docOptions.IncludeNamespaces
-                            ? CreateFileBaseNameWithNamespace(kvp.Key)
-                            : kvp.Key.Name;
-                        string fileName = EnsureUniqueFileName(baseName, ext, usedNames);
-                        typeToFileName[kvp.Key] = fileName;
-                    }
-
-                    // Render root file with links to separate type files
-                    documentationGenerator.GenerateWithFileLinks(sb, classSymbol, tables, typeToFileName, docOptions.IncludeNamespaces);
-
-                    // Resolve root output path (directory or file supported)
-                    string rootFullPath = ComposeRootOutputPath(
-                        context,
-                        docOptions.OutputDirectory,
-                        projectDirectory,
-                        repoRoot,
-                        fmt,
-                        classSymbol,
-                        docOptions.IncludeNamespaces);
-
-                    // Write root file
-                    WriteResolvedFile(context, rootFullPath, sb.ToString());
-
-                    // Write each type table to its own file next to the root output (same directory)
-                    foreach (KeyValuePair<INamedTypeSymbol, List<TableRow>> kvp in tables.TypeTables)
-                    {
-                        string typeFileName = typeToFileName[kvp.Key];
-                        string rootPath = rootFullPath; // already resolved file path
-                        string? rootDir = Path.GetDirectoryName(rootPath);
-                        string typePath = Path.Combine(rootDir ?? string.Empty, typeFileName);
-
-                        StringBuilder subSb = new();
-                        documentationGenerator.GenerateTypeTable(subSb, kvp.Key, kvp.Value, docOptions.IncludeNamespaces);
-
-                        // Write sub file
-                        WriteResolvedFile(context, typePath, subSb.ToString());
-                    }
-                }
-                else
-                {
-                    // Convert RootRows into DocumentationDataModel list for existing generator method
-                    List<DocumentationDataModel> entries = [..tables.RootRows.Select(row => row.Data)];
-
-                    documentationGenerator.Generate(sb, classSymbol, entries, docOptions.IncludeNamespaces);
-
-                    // Resolve root output path and write
-                    string rootFullPath = ComposeRootOutputPath(
-                        context,
-                        docOptions.OutputDirectory,
-                        projectDirectory,
-                        repoRoot,
-                        fmt,
-                        classSymbol,
-                        docOptions.IncludeNamespaces);
-
-                    WriteResolvedFile(context, rootFullPath, sb.ToString());
-                }
+                tableGenerator.GenerateTable(docOptions, context, classSymbol, projectDirectory, repoRoot);
             }
         }
-    }
-
-    private static string CreateFileBaseNameWithNamespace(INamedTypeSymbol symbol)
-    {
-        string fq = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat); // e.g., global::Namespace.Type
-        if (fq.StartsWith("global::"))
-        {
-            fq = fq.Substring("global::".Length);
-        }
-        StringBuilder sbName = new();
-        foreach (char c in fq)
-        {
-            if (char.IsLetterOrDigit(c))
-            {
-                sbName.Append(c);
-            }
-            else if (c == '.' || c == '_' || c == '+')
-            {
-                sbName.Append('-');
-            }
-        }
-        return sbName.ToString();
-    }
-
-    private static string EnsureUniqueFileName(string baseName, string ext, HashSet<string> usedNames)
-    {
-        string candidate = baseName + ext;
-        int i = 2;
-        while (!usedNames.Add(candidate))
-        {
-            candidate = baseName + "-" + i + ext;
-            i++;
-        }
-        return candidate;
-    }
-
-    private static void WriteResolvedFile(SourceProductionContext context, string fullPath, string content)
-    {
-        try
-        {
-            string? dir = Path.GetDirectoryName(fullPath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-            File.WriteAllText(fullPath, content, Encoding.UTF8);
-            LogInfo(context, "Writing documentation (resolved): {0}", fullPath);
-        }
-        catch (Exception ex)
-        {
-            DiagnosticDescriptor desc = new(DiagnosticIds.FileOutputFailed, "DocumentationGeneratorWriteFailed", "Failed to write documentation file '{0}': {1}", "DocumentationGenerator", DiagnosticSeverity.Warning, true);
-            Diagnostic diagnostic = Diagnostic.Create(desc, Location.None, fullPath, ex.Message);
-            context.ReportDiagnostic(diagnostic);
-        }
-    }
-
-    private static string ComposeRootOutputPath(
-        SourceProductionContext context,
-        string requestedPath,
-        string projectDirectory,
-        string repoRoot,
-        LocalFormat fmt,
-        INamedTypeSymbol classSymbol,
-        bool includeNamespaces)
-    {
-        string ext = fmt == LocalFormat.AsciiDoc ? ".adoc" : ".md";
-
-        // Resolve base path first (absolute or under project root)
-        string baseProjectRoot = !string.IsNullOrEmpty(projectDirectory) ? projectDirectory : repoRoot;
-        string resolved = Path.IsPathRooted(requestedPath)
-            ? requestedPath
-            : Path.GetFullPath(Path.Combine(baseProjectRoot, requestedPath));
-
-        // Determine if the user provided a directory or a file
-        bool looksLikeDirectory = resolved.EndsWith(Path.DirectorySeparatorChar.ToString())
-                                  || resolved.EndsWith(Path.AltDirectorySeparatorChar.ToString())
-                                  || !Path.HasExtension(resolved)
-                                  || Directory.Exists(resolved);
-
-        if (!looksLikeDirectory)
-        {
-            // The configured output path looks like a file. Only directories are allowed for the outputDirectory option.
-            // Emit a warning and fall back to the containing directory of the provided path (or project root if none).
-            string parentDir = Path.GetDirectoryName(resolved) ?? baseProjectRoot;
-            DiagnosticDescriptor desc = new(DiagnosticIds.OutputDirectoryNotADirectory, "OutputDirectoryMustBeDirectory", "Output path '{0}' looks like a file; only directories are supported. Using directory '{1}' instead.", "DocumentationGenerator", DiagnosticSeverity.Warning, true);
-            Diagnostic diagnostic = Diagnostic.Create(desc, Location.None, requestedPath, parentDir);
-            context.ReportDiagnostic(diagnostic);
-
-            // Treat the parent directory as the resolved directory
-            resolved = parentDir;
-        }
-
-        // Ensure directory exists (create later on write)
-        string directory = resolved.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        string baseName = includeNamespaces ? CreateFileBaseNameWithNamespace(classSymbol) : classSymbol.Name;
-
-        string candidate = Path.Combine(directory, baseName + ext);
-        return candidate;
     }
 }
