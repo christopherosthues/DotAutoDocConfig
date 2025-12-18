@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -28,10 +29,10 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
                 static (ctx, _) => (ClassDeclarationSyntax)ctx.TargetNode);
 
         // Try to read the project directory and project name from analyzer config global options (MSBuildProjectDirectory/MSBuildProjectName).
-        IncrementalValueProvider<(string projectDirectory, string projectName)> buildProps = context.ProjectDirectoryAndNameProvider();
+        IncrementalValueProvider<BuildProperties> buildProps = context.BuildPropsProvider();
 
         // Compilation, gefundene Klassen und Build-Props kombinieren
-        IncrementalValueProvider<((Compilation Left, ImmutableArray<ClassDeclarationSyntax> Right) Left, (string projectDirectory, string projectName) Right)> combined = context.CompilationProvider
+        IncrementalValueProvider<((Compilation Left, ImmutableArray<ClassDeclarationSyntax> Right) Left, BuildProperties Right)> combined = context.CompilationProvider
             .Combine(provider.Collect())
             .Combine(buildProps);
 
@@ -41,8 +42,13 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
             {
                 Compilation compilation = data.Left.Left;
                 ImmutableArray<ClassDeclarationSyntax> classes = data.Left.Right;
-                (string projectDirectory, string projectName) = data.Right;
-                GenerateCode(spc, compilation, classes, projectDirectory, projectName);
+                BuildProperties buildProperties = data.Right;
+                if (!buildProperties.IsBuild)
+                {
+                    // Skip generation during design-time builds (e.g., in IDEs) to avoid unnecessary overhead.
+                    return;
+                }
+                GenerateCode(spc, compilation, classes, buildProperties.ProjectDirectory, buildProperties.ProjectName);
             });
     }
 

@@ -1,4 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System;
+using DotAutoDocConfig.SourceGenerator.Models;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace DotAutoDocConfig.SourceGenerator.Extensions;
@@ -7,9 +9,9 @@ internal static class IncrementalGeneratorInitializationContextExtensions
 {
     extension(IncrementalGeneratorInitializationContext context)
     {
-        public IncrementalValueProvider<(string projectDirectory, string projectName)> ProjectDirectoryAndNameProvider()
+        public IncrementalValueProvider<BuildProperties> BuildPropsProvider()
         {
-            IncrementalValueProvider<(string projectDirectory, string projectName)> buildProps = context.AnalyzerConfigOptionsProvider
+            IncrementalValueProvider<BuildProperties> buildProps = context.AnalyzerConfigOptionsProvider
                 .Select(static (optsProvider, _) =>
                 {
                     AnalyzerConfigOptions opts = optsProvider.GlobalOptions;
@@ -19,7 +21,11 @@ internal static class IncrementalGeneratorInitializationContextExtensions
                     }
 
                     opts.TryGetValue("build_property.MSBuildProjectName", out string? projectName);
-                    return (projectDirectory: projectDirectory ?? string.Empty, projectName: projectName ?? string.Empty);
+
+                    bool isBuild = !opts.TryGetValue("build_property.DesignTimeBuild", out string? designTime) &&
+                                   string.Equals(designTime, "true", StringComparison.OrdinalIgnoreCase); // TODO: Check logic
+                    isBuild = true;
+                    return new BuildProperties(projectDirectory ?? string.Empty, projectName ?? string.Empty, isBuild);
                 });
             return buildProps;
         }
