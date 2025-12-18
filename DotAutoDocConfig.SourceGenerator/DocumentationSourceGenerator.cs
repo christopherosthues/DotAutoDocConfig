@@ -26,7 +26,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
     {
         // Emit an informational diagnostic that shows up in the build output
         DiagnosticDescriptor descriptor = new(
-            id: "DDG000",
+            id: DiagnosticIds.InfoType,
             title: "DocumentationGeneratorInfo",
             messageFormat: message,
             category: "DocumentationGenerator",
@@ -214,6 +214,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
 
                     // Resolve root output path (directory or file supported)
                     string rootFullPath = ComposeRootOutputPath(
+                        context,
                         docOptions.OutputDirectory,
                         projectDirectory,
                         repoRoot,
@@ -248,6 +249,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
 
                     // Resolve root output path and write
                     string rootFullPath = ComposeRootOutputPath(
+                        context,
                         docOptions.OutputDirectory,
                         projectDirectory,
                         repoRoot,
@@ -309,13 +311,14 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
         }
         catch (Exception ex)
         {
-            DiagnosticDescriptor desc = new("DDG001", "DocumentationGeneratorWriteFailed", "Failed to write documentation file '{0}': {1}", "DocumentationGenerator", DiagnosticSeverity.Warning, true);
+            DiagnosticDescriptor desc = new(DiagnosticIds.FileOutputFailed, "DocumentationGeneratorWriteFailed", "Failed to write documentation file '{0}': {1}", "DocumentationGenerator", DiagnosticSeverity.Warning, true);
             Diagnostic diagnostic = Diagnostic.Create(desc, Location.None, fullPath, ex.Message);
             context.ReportDiagnostic(diagnostic);
         }
     }
 
     private static string ComposeRootOutputPath(
+        SourceProductionContext context,
         string requestedPath,
         string projectDirectory,
         string repoRoot,
@@ -339,7 +342,15 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
 
         if (!looksLikeDirectory)
         {
-            return resolved;
+            // The configured output path looks like a file. Only directories are allowed for the outputDirectory option.
+            // Emit a warning and fall back to the containing directory of the provided path (or project root if none).
+            string parentDir = Path.GetDirectoryName(resolved) ?? baseProjectRoot;
+            DiagnosticDescriptor desc = new(DiagnosticIds.OutputDirectoryNotADirectory, "OutputDirectoryMustBeDirectory", "Output path '{0}' looks like a file; only directories are supported. Using directory '{1}' instead.", "DocumentationGenerator", DiagnosticSeverity.Warning, true);
+            Diagnostic diagnostic = Diagnostic.Create(desc, Location.None, requestedPath, parentDir);
+            context.ReportDiagnostic(diagnostic);
+
+            // Treat the parent directory as the resolved directory
+            resolved = parentDir;
         }
 
         // Ensure directory exists (create later on write)
