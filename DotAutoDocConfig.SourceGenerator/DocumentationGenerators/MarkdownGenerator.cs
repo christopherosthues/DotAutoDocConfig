@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
 
-public class MarkdownGenerator : IDocumentationGenerator
+internal class MarkdownGenerator : IDocumentationGenerator
 {
     public void Generate(StringBuilder sb, INamedTypeSymbol classSymbol, IEnumerable<DocumentationDataModel> entries, bool includeNamespaces)
     {

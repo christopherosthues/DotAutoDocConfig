@@ -1,6 +1,6 @@
 ﻿namespace DotAutoDocConfig.SourceGenerator.Models;
 
-public enum LocalFormat : byte
+internal enum LocalFormat : byte
 {
     AsciiDoc = 0,
     Markdown = 1,

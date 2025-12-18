@@ -2,7 +2,7 @@ using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.Models;
 
-public class DocumentationDataModel
+internal class DocumentationDataModel
 {
     public INamedTypeSymbol ClassSymbol { get; set; } = null!;
     public string ParameterName { get; set; } = null!;

@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.Extensions;
 
-public static class SymbolExtensions
+internal static class SymbolExtensions
 {
     extension(ISymbol symbol)
     {
@@ -32,7 +32,6 @@ public static class SymbolExtensions
                 }
                 catch
                 {
-                    // Regex-Fallback: ausschließlich den Inhalt aus <summary> extrahieren
                     Match m = Regex.Match(xml, "<summary\\b[^>]*>(?<c>.*?)</summary>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
                     if (m.Success)
                     {
@@ -41,7 +40,6 @@ public static class SymbolExtensions
                     }
                 }
 
-                // Kein <summary> gefunden
                 return string.Empty;
             }
             catch
@@ -72,7 +70,6 @@ public static class SymbolExtensions
                 }
                 catch
                 {
-                    // Regex-Fallback: ausschließlich den Inhalt aus <example> extrahieren
                     Match m = Regex.Match(xml, "<example\\b[^>]*>(?<c>.*?)</example>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
                     if (m.Success)
                     {

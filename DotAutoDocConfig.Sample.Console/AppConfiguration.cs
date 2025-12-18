@@ -7,7 +7,7 @@ namespace DotAutoDocConfig.Sample.Console;
 /// Represents application-level configuration options used by the sample console app.
 /// </summary>
 [Documentation(DocumentationFormat.Markdown, "docs/AppConfiguration.md", ComplexParameterFormat.SeparateTables)]
-[Documentation(DocumentationFormat.AsciiDoc, "docs/", includeNamespaces: true)]
+[Documentation(DocumentationFormat.AsciiDoc, "docs/AppConfiguration.adoc", includeNamespaces: true)]
 public class AppConfiguration
 {
     /// <summary>
@@ -52,6 +52,38 @@ public class AppConfiguration
     /// Logging level for application logs.
     /// </summary>
     public LogLevel LogLevel { get; set; } = LogLevel.Information;
+
+    /// <summary>
+    /// An example of nested configuration.
+    /// </summary>
+    public SomeNestedConfiguration NestedConfig { get; set; } = new();
+}
+
+/// <summary>
+/// Represents a nested configuration example.
+/// </summary>
+public class SomeNestedConfiguration
+{
+    /// <summary>
+    /// A sample nested property.
+    /// </summary>
+    public string NestedProperty { get; set; } = "NestedValue";
+
+    /// <summary>
+    /// another level of nested configuration
+    /// </summary>
+    public SomeOtherNestedConfiguration Nested { get; set; } = new();
+}
+
+/// <summary>
+/// Represents another nested configuration example.
+/// </summary>
+public class SomeOtherNestedConfiguration
+{
+    /// <summary>
+    /// Another sample nested property.
+    /// </summary>
+    public int AnotherNestedProperty { get; set; } = 42;
 }
 
 /// <summary>

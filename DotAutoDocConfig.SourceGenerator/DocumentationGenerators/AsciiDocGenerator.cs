@@ -6,7 +6,7 @@ using DotAutoDocConfig.SourceGenerator.Models;
 
 namespace DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
 
-public class AsciiDocGenerator : IDocumentationGenerator
+internal class AsciiDocGenerator : IDocumentationGenerator
 {
     public void Generate(StringBuilder sb, INamedTypeSymbol classSymbol, IEnumerable<DocumentationDataModel> entries, bool includeNamespaces)
     {

@@ -1,6 +1,6 @@
 namespace DotAutoDocConfig.SourceGenerator.Models;
 
-public class DocumentationOptionsDataModel
+internal class DocumentationOptionsDataModel
 {
     // Use byte for format to avoid referencing the external DocumentationFormat enum from DotAutoDocConfig.Core
     public byte Format { get; set; }
@@ -8,7 +8,7 @@ public class DocumentationOptionsDataModel
     // Use byte to avoid referencing ComplexParameterFormat from the Core project
     public byte ComplexParameterFormat { get; set; }
 
-    public string OutputPath { get; set; } = null!;
+    public string OutputDirectory { get; set; } = null!;
 
     // New: whether to include namespaces in headings/labels
     public bool IncludeNamespaces { get; set; }

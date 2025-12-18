@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Text;
+using DotAutoDocConfig.SourceGenerator.Collectors;
 using DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
 using DotAutoDocConfig.SourceGenerator.Extensions;
 using DotAutoDocConfig.SourceGenerator.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace DotAutoDocConfig.SourceGenerator;
 
@@ -131,7 +132,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
             documentationDataModels.Add(new DocumentationOptionsDataModel
             {
                 Format = formatValue,
-                OutputPath = outputPath,
+                OutputDirectory = outputPath,
                 ComplexParameterFormat = complexFormat,
                 IncludeNamespaces = includeNamespaces
             });
@@ -189,11 +190,12 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
                 LocalFormat fmt = (LocalFormat)docOptions.Format;
                 ComplexParameterFormat complexFmt = (ComplexParameterFormat)docOptions.ComplexParameterFormat;
                 IDocumentationGenerator documentationGenerator = DocumentationGeneratorFactory.CreateGenerator(fmt);
+                IConfigurationCollector configurationCollector = ConfigurationCollectorFactory.CreateCollector(complexFmt);
+
+                DocumentationTablesModel tables = configurationCollector.Collect(classSymbol);
 
                 if (complexFmt == ComplexParameterFormat.SeparateTables)
                 {
-                    DocumentationTablesModel tables = SeparateTableCollector.CollectDocumentationEntries(classSymbol);
-
                     // Prepare file names for each type table
                     Dictionary<INamedTypeSymbol, string> typeToFileName = new(SymbolEqualityComparer.Default);
                     HashSet<string> usedNames = new(StringComparer.OrdinalIgnoreCase);
@@ -212,7 +214,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
 
                     // Resolve root output path (directory or file supported)
                     string rootFullPath = ComposeRootOutputPath(
-                        docOptions.OutputPath,
+                        docOptions.OutputDirectory,
                         projectDirectory,
                         repoRoot,
                         fmt,
@@ -236,19 +238,17 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
                         // Write sub file
                         WriteResolvedFile(context, typePath, subSb.ToString());
                     }
-
-                    // Move on to next docOptions
                 }
                 else
                 {
-                    // InlineJsonShort: single file generation
-                    List<DocumentationDataModel> entries = InlineTableCollector.CollectDocumentationEntries(classSymbol);
+                    // Convert RootRows into DocumentationDataModel list for existing generator method
+                    List<DocumentationDataModel> entries = [..tables.RootRows.Select(row => row.Data)];
 
                     documentationGenerator.Generate(sb, classSymbol, entries, docOptions.IncludeNamespaces);
 
                     // Resolve root output path and write
                     string rootFullPath = ComposeRootOutputPath(
-                        docOptions.OutputPath,
+                        docOptions.OutputDirectory,
                         projectDirectory,
                         repoRoot,
                         fmt,

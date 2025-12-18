@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
 
-public interface IDocumentationGenerator
+internal interface IDocumentationGenerator
 {
     void Generate(StringBuilder sb, INamedTypeSymbol classSymbol, IEnumerable<DocumentationDataModel> entries, bool includeNamespaces);
 

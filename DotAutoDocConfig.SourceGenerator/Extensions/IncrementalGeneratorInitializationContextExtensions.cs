@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace DotAutoDocConfig.SourceGenerator.Extensions;
 
-public static class IncrementalGeneratorInitializationContextExtensions
+internal static class IncrementalGeneratorInitializationContextExtensions
 {
     extension(IncrementalGeneratorInitializationContext context)
     {

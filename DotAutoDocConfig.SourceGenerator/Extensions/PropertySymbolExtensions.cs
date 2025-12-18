@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DotAutoDocConfig.SourceGenerator.Extensions;
 
-public static class PropertySymbolExtensions
+internal static class PropertySymbolExtensions
 {
     extension(IPropertySymbol propertySymbol)
     {

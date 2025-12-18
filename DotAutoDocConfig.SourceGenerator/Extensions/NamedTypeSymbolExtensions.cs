@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.Extensions;
 
-public static class NamedTypeSymbolExtensions
+internal static class NamedTypeSymbolExtensions
 {
     extension(INamedTypeSymbol typeSymbol)
     {

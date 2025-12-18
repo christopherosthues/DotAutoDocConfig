@@ -2,7 +2,7 @@
 
 namespace DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
 
-public static class DocumentationGeneratorFactory
+internal static class DocumentationGeneratorFactory
 {
     public static IDocumentationGenerator CreateGenerator(LocalFormat format)
     {
