@@ -58,3 +58,6 @@ riderModule.iml
 /_ReSharper.Caches/
 
 .idea/
+
+DotAutoDocConfig.Sample.Console/docs/
+**/*.sln.DotSettings.user
