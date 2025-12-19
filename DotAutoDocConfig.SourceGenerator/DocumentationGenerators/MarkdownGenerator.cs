@@ -63,7 +63,16 @@ internal class MarkdownGenerator : IDocumentationGenerator
         sb.AppendLine("|---|---|---|---|---|");
     }
 
-    private static void GenerateSummary(StringBuilder sb, INamedTypeSymbol classSymbol) => classSymbol.AddSummary(sb);
+    private static void GenerateSummary(StringBuilder sb, INamedTypeSymbol classSymbol)
+    {
+        string summary = classSymbol.GetSummary();
+        if (!string.IsNullOrEmpty(summary))
+        {
+            sb.AppendLine();
+            sb.AppendLine(summary);
+        }
+        sb.AppendLine();
+    }
 
     private static string LinkToFile(string text, INamedTypeSymbol target, Dictionary<INamedTypeSymbol, string> typeToFileName)
     {

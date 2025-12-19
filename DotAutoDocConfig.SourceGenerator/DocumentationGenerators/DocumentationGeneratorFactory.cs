@@ -10,6 +10,7 @@ internal static class DocumentationGeneratorFactory
         {
             LocalFormat.AsciiDoc => new AsciiDocGenerator(),
             LocalFormat.Markdown => new MarkdownGenerator(),
+            LocalFormat.Html => new HtmlGenerator(),
             _ => new AsciiDocGenerator()
         };
     }

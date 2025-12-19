@@ -21,16 +21,5 @@ internal static class NamedTypeSymbolExtensions
 
             return ns + "." + typeSymbol.Name;
         }
-
-        public void AddSummary(StringBuilder sb)
-        {
-            string summary = typeSymbol.GetSummary();
-            if (!string.IsNullOrEmpty(summary))
-            {
-                sb.AppendLine();
-                sb.AppendLine(summary);
-            }
-            sb.AppendLine();
-        }
     }
 }
