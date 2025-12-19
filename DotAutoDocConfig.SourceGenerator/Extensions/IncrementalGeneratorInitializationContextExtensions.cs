@@ -1,5 +1,4 @@
-﻿using System;
-using DotAutoDocConfig.SourceGenerator.Models;
+﻿using DotAutoDocConfig.SourceGenerator.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -15,17 +14,20 @@ internal static class IncrementalGeneratorInitializationContextExtensions
                 .Select(static (optsProvider, _) =>
                 {
                     AnalyzerConfigOptions opts = optsProvider.GlobalOptions;
-                    if (!opts.TryGetValue("build_property.MSBuildProjectDirectory", out string? projectDirectory))
+                    if (!opts.TryGetValue("build_property.MSBuildProjectDirectory", out string? projectDirectory) &&
+                        !opts.TryGetValue("build_property.ProjectDir", out projectDirectory) &&
+                        !opts.TryGetValue("build_property.projectdir", out projectDirectory))
                     {
-                        opts.TryGetValue("build_property.ProjectDir", out projectDirectory);
+                        projectDirectory = string.Empty;
                     }
 
-                    opts.TryGetValue("build_property.MSBuildProjectName", out string? projectName);
+                    if (!opts.TryGetValue("build_property.MSBuildProjectName", out string? projectName) &&
+                        !opts.TryGetValue("build_property.rootnamespace", out projectName))
+                    {
+                        projectName = string.Empty;
+                    }
 
-                    bool isBuild = !opts.TryGetValue("build_property.DesignTimeBuild", out string? designTime) &&
-                                   string.Equals(designTime, "true", StringComparison.OrdinalIgnoreCase); // TODO: Check logic
-                    isBuild = true;
-                    return new BuildProperties(projectDirectory ?? string.Empty, projectName ?? string.Empty, isBuild);
+                    return new BuildProperties(projectDirectory, projectName);
                 });
             return buildProps;
         }

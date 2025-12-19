@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -43,11 +42,6 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
                 Compilation compilation = data.Left.Left;
                 ImmutableArray<ClassDeclarationSyntax> classes = data.Left.Right;
                 BuildProperties buildProperties = data.Right;
-                if (!buildProperties.IsBuild)
-                {
-                    // Skip generation during design-time builds (e.g., in IDEs) to avoid unnecessary overhead.
-                    return;
-                }
                 GenerateCode(spc, compilation, classes, buildProperties.ProjectDirectory, buildProperties.ProjectName);
             });
     }
