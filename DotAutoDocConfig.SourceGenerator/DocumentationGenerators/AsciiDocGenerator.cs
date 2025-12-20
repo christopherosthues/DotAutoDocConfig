@@ -15,7 +15,7 @@ internal class AsciiDocGenerator : IDocumentationGenerator
         foreach (DocumentationDataModel? e in entries)
         {
             sb.AppendLine();
-            sb.AppendLine($"| {e.ParameterName} | {EscapePipe(e.ParameterType)} | {EscapePipe(e.DefaultValue)} | {EscapePipe(e.ExampleValue)} | {EscapePipe(e.Summary)}");
+            sb.AppendLine($"| {e.ParameterName} | {Escape(e.ParameterType)} | {Escape(e.DefaultValue)} | {Escape(e.ExampleValue)} | {Escape(e.Summary)}");
         }
 
         sb.AppendLine("|===");
@@ -27,26 +27,30 @@ internal class AsciiDocGenerator : IDocumentationGenerator
 
         foreach (TableRow row in tables.RootRows)
         {
+            DocumentationDataModel model = row.Data;
             string name = row.ComplexTarget is null
-                ? row.Data.ParameterName
-                : LinkToFile(row.Data.ParameterName, row.ComplexTarget!, typeToFileName);
+                ? model.ParameterName
+                : LinkToFile(model.ParameterName, row.ComplexTarget!, typeToFileName);
             sb.AppendLine();
-            sb.AppendLine($"| {name} | {EscapePipe(row.Data.ParameterType)} | {EscapePipe(row.Data.DefaultValue)} | {EscapePipe(row.Data.ExampleValue)} | {EscapePipe(row.Data.Summary)}");
+            sb.AppendLine($"| {name} | {Escape(model.ParameterType)} | {Escape(model.DefaultValue)} | {Escape(model.ExampleValue)} | {Escape(model.Summary)}");
         }
         sb.AppendLine("|===");
         sb.AppendLine();
     }
 
-    public void GenerateTypeTable(StringBuilder sb, INamedTypeSymbol typeSymbol, List<TableRow> rows, bool includeNamespaces)
+    public void GenerateTypeTable(StringBuilder sb, INamedTypeSymbol typeSymbol, List<TableRow> rows, Dictionary<INamedTypeSymbol, string> typeToFileName, bool includeNamespaces)
     {
         sb.AppendLine($"= {typeSymbol.FriendlyQualifiedName(includeNamespaces)} Configuration");
         GenerateSummary(sb, typeSymbol);
         GenerateTableHeader(sb);
         foreach (TableRow row in rows)
         {
-            string name = row.Data.ParameterName;
+            DocumentationDataModel model = row.Data;
+            string name = row.ComplexTarget is null
+                ? model.ParameterName
+                : LinkToFile(model.ParameterName, row.ComplexTarget!, typeToFileName);
             sb.AppendLine();
-            sb.AppendLine($"| {name} | {EscapePipe(row.Data.ParameterType)} | {EscapePipe(row.Data.DefaultValue)} | {EscapePipe(row.Data.ExampleValue)} | {EscapePipe(row.Data.Summary)}");
+            sb.AppendLine($"| {name} | {Escape(model.ParameterType)} | {Escape(model.DefaultValue)} | {Escape(model.ExampleValue)} | {Escape(model.Summary)}");
         }
         sb.AppendLine("|===");
     }
@@ -85,7 +89,7 @@ internal class AsciiDocGenerator : IDocumentationGenerator
         return $"xref:{fileName}[{text}]";
     }
 
-    private static string EscapePipe(string? input)
+    private static string Escape(string? input)
     {
         string s = input ?? string.Empty;
         return s.Replace("|", "\\|");

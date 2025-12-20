@@ -60,7 +60,7 @@ internal class SeparateTableGenerator : TableGeneratorBase
             string typePath = Path.Combine(rootDir ?? string.Empty, typeFileName);
 
             StringBuilder subSb = new();
-            documentationGenerator.GenerateTypeTable(subSb, kvp.Key, kvp.Value, docOptions.IncludeNamespaces);
+            documentationGenerator.GenerateTypeTable(subSb, kvp.Key, kvp.Value, typeToFileName, docOptions.IncludeNamespaces);
 
             // Write sub file
             WriteResolvedFile(context, typePath, subSb.ToString());

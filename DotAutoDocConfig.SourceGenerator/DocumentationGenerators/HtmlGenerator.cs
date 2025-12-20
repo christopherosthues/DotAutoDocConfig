@@ -15,7 +15,7 @@ internal class HtmlGenerator : IDocumentationGenerator
         sb.AppendLine("<tbody>");
         foreach (DocumentationDataModel? e in entries)
         {
-            sb.AppendLine($"    <tr><td>{EscapeHtml(e.ParameterName)}</td><td>{EscapeHtml(e.ParameterType)}</td><td>{EscapeHtml(e.DefaultValue)}</td><td>{EscapeHtml(e.ExampleValue)}</td><td>{EscapeHtml(e.Summary)}</td></tr>");
+            sb.AppendLine($"    <tr><td>{Escape(e.ParameterName)}</td><td>{Escape(e.ParameterType)}</td><td>{Escape(e.DefaultValue)}</td><td>{Escape(e.ExampleValue)}</td><td>{Escape(e.Summary)}</td></tr>");
         }
         sb.AppendLine("</tbody>");
         sb.AppendLine("</table>");
@@ -28,26 +28,30 @@ internal class HtmlGenerator : IDocumentationGenerator
         sb.AppendLine("<tbody>");
         foreach (TableRow row in tables.RootRows)
         {
+            DocumentationDataModel model = row.Data;
             string name = row.ComplexTarget is null
-                ? EscapeHtml(row.Data.ParameterName)
-                : LinkToFile(row.Data.ParameterName, row.ComplexTarget!, typeToFileName);
-            sb.AppendLine($"    <tr><td>{name}</td><td>{EscapeHtml(row.Data.ParameterType)}</td><td>{EscapeHtml(row.Data.DefaultValue)}</td><td>{EscapeHtml(row.Data.ExampleValue)}</td><td>{EscapeHtml(row.Data.Summary)}</td></tr>");
+                ? Escape(model.ParameterName)
+                : LinkToFile(model.ParameterName, row.ComplexTarget!, typeToFileName);
+            sb.AppendLine($"    <tr><td>{name}</td><td>{Escape(model.ParameterType)}</td><td>{Escape(model.DefaultValue)}</td><td>{Escape(model.ExampleValue)}</td><td>{Escape(model.Summary)}</td></tr>");
         }
         sb.AppendLine("</tbody>");
         sb.AppendLine("</table>");
     }
 
-    public void GenerateTypeTable(StringBuilder sb, INamedTypeSymbol typeSymbol, List<TableRow> rows, bool includeNamespaces)
+    public void GenerateTypeTable(StringBuilder sb, INamedTypeSymbol typeSymbol, List<TableRow> rows, Dictionary<INamedTypeSymbol, string> typeToFileName, bool includeNamespaces)
     {
-        sb.AppendLine($"<h1>{EscapeHtml(typeSymbol.FriendlyQualifiedName(includeNamespaces))} Configuration</h1>");
+        sb.AppendLine($"<h1>{Escape(typeSymbol.FriendlyQualifiedName(includeNamespaces))} Configuration</h1>");
         GenerateSummary(sb, typeSymbol);
         GenerateTableHeader(sb);
 
         sb.AppendLine("<tbody>");
         foreach (TableRow row in rows)
         {
-            string name = EscapeHtml(row.Data.ParameterName);
-            sb.AppendLine($"    <tr><td>{name}</td><td>{EscapeHtml(row.Data.ParameterType)}</td><td>{EscapeHtml(row.Data.DefaultValue)}</td><td>{EscapeHtml(row.Data.ExampleValue)}</td><td>{EscapeHtml(row.Data.Summary)}</td></tr>");
+            DocumentationDataModel model = row.Data;
+            string name = row.ComplexTarget is null
+                ? model.ParameterName
+                : LinkToFile(model.ParameterName, row.ComplexTarget!, typeToFileName);
+            sb.AppendLine($"    <tr><td>{name}</td><td>{Escape(model.ParameterType)}</td><td>{Escape(model.DefaultValue)}</td><td>{Escape(model.ExampleValue)}</td><td>{Escape(model.Summary)}</td></tr>");
         }
         sb.AppendLine("</tbody>");
         sb.AppendLine("</table>");
@@ -56,7 +60,7 @@ internal class HtmlGenerator : IDocumentationGenerator
     private static void GenerateRootTableHeader(StringBuilder sb, INamedTypeSymbol classSymbol, bool includeNamespaces)
     {
         sb.AppendLine("<h1>Configuration Documentation</h1>");
-        sb.AppendLine($"<h2>{EscapeHtml(classSymbol.FriendlyQualifiedName(includeNamespaces))}</h2>");
+        sb.AppendLine($"<h2>{Escape(classSymbol.FriendlyQualifiedName(includeNamespaces))}</h2>");
         GenerateSummary(sb, classSymbol);
         GenerateTableHeader(sb);
     }
@@ -78,16 +82,16 @@ internal class HtmlGenerator : IDocumentationGenerator
     private static void GenerateSummary(StringBuilder sb, INamedTypeSymbol classSymbol)
     {
         string summary = classSymbol.GetSummary();
-        sb.AppendLine($"<p>{EscapeHtml(summary)}</p>");
+        sb.AppendLine($"<p>{Escape(summary)}</p>");
     }
 
     private static string LinkToFile(string text, INamedTypeSymbol target, Dictionary<INamedTypeSymbol, string> typeToFileName)
     {
         string fileName = typeToFileName[target];
-        return $"<a href=\"{fileName}\">{EscapeHtml(text)}</a>";
+        return $"<a href=\"{fileName}\">{Escape(text)}</a>";
     }
 
-    private static string EscapeHtml(string? input)
+    private static string Escape(string? input)
     {
         if (string.IsNullOrEmpty(input))
         {

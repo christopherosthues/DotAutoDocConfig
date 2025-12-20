@@ -12,9 +12,9 @@ internal class MarkdownGenerator : IDocumentationGenerator
     {
         GenerateRootTableHeader(sb, classSymbol, includeNamespaces);
 
-        foreach (DocumentationDataModel? e in entries)
+        foreach (DocumentationDataModel model in entries)
         {
-            sb.AppendLine($"| {EscapePipe(e.ParameterName)} | {EscapePipe(e.ParameterType)} | {EscapePipe(e.DefaultValue)} | {EscapePipe(e.ExampleValue)} | {EscapePipe(e.Summary)} |");
+            GenerateTableRow(sb, Escape(model.ParameterName), Escape(model.ParameterType), Escape(model.DefaultValue), Escape(model.ExampleValue), Escape(model.Summary));
         }
 
         sb.AppendLine();
@@ -26,41 +26,60 @@ internal class MarkdownGenerator : IDocumentationGenerator
 
         foreach (TableRow row in tables.RootRows)
         {
+            DocumentationDataModel model = row.Data;
             string name = row.ComplexTarget is null
-                ? row.Data.ParameterName
-                : LinkToFile(row.Data.ParameterName, row.ComplexTarget!, typeToFileName);
-            sb.AppendLine($"| {EscapePipe(name)} | {EscapePipe(row.Data.ParameterType)} | {EscapePipe(row.Data.DefaultValue)} | {EscapePipe(row.Data.ExampleValue)} | {EscapePipe(row.Data.Summary)} |");
+                ? model.ParameterName
+                : LinkToFile(model.ParameterName, row.ComplexTarget!, typeToFileName);
+            GenerateTableRow(sb, Escape(name), Escape(model.ParameterType), Escape(model.DefaultValue), Escape(model.ExampleValue), Escape(model.Summary));
         }
         sb.AppendLine();
     }
 
-    public void GenerateTypeTable(StringBuilder sb, INamedTypeSymbol typeSymbol, List<TableRow> rows, bool includeNamespaces)
+    public void GenerateTypeTable(StringBuilder sb, INamedTypeSymbol typeSymbol, List<TableRow> rows, Dictionary<INamedTypeSymbol, string> typeToFileName, bool includeNamespaces)
     {
-        sb.AppendLine($"# {typeSymbol.FriendlyQualifiedName(includeNamespaces)}");
+        GenerateTitle(sb, typeSymbol.FriendlyQualifiedName(includeNamespaces));
         GenerateSummary(sb, typeSymbol);
         GenerateTableHeader(sb);
         foreach (TableRow row in rows)
         {
-            string name = row.Data.ParameterName;
-            sb.AppendLine($"| {EscapePipe(name)} | {EscapePipe(row.Data.ParameterType)} | {EscapePipe(row.Data.DefaultValue)} | {EscapePipe(row.Data.ExampleValue)} | {EscapePipe(row.Data.Summary)} |");
+            DocumentationDataModel model = row.Data;
+            string name = row.ComplexTarget is null
+                ? model.ParameterName
+                : LinkToFile(model.ParameterName, row.ComplexTarget!, typeToFileName);
+            GenerateTableRow(sb, Escape(name), Escape(model.ParameterType), Escape(model.DefaultValue), Escape(model.ExampleValue), Escape(model.Summary));
         }
         sb.AppendLine();
     }
 
     private static void GenerateRootTableHeader(StringBuilder sb, INamedTypeSymbol classSymbol, bool includeNamespaces)
     {
-        sb.AppendLine("# Configuration Documentation");
+        GenerateTitle(sb, "Configuration Documentation");
         sb.AppendLine();
-        sb.AppendLine($"## {classSymbol.FriendlyQualifiedName(includeNamespaces)}");
+        GenerateSubtitle(sb, classSymbol.FriendlyQualifiedName(includeNamespaces));
 
         GenerateSummary(sb, classSymbol);
         GenerateTableHeader(sb);
     }
 
+    private static void GenerateTitle(StringBuilder sb, string title) => sb.AppendLine($"# {title}");
+
+    private static void GenerateSubtitle(StringBuilder sb, string subtitle) => sb.AppendLine($"## {subtitle}");
+
     private static void GenerateTableHeader(StringBuilder sb)
     {
-        sb.AppendLine("| Parameter | Type | Default Value | Example Value | Description |");
-        sb.AppendLine("|---|---|---|---|---|");
+        GenerateTableRow(sb, "Parameter", "Type", "Default Value", "Example Value", "Description");
+        GenerateTableRow(sb, "---", "---", "---", "---", "---");
+    }
+
+    private static void GenerateTableRow(StringBuilder sb, string parameter, string type, string defaultValue, string exampleValue, string summary)
+    {
+        sb.Append("|");
+        sb.Append($" {parameter} |");
+        sb.Append($" {type} |");
+        sb.Append($" {defaultValue} |");
+        sb.Append($" {exampleValue} |");
+        sb.Append($" {summary} |");
+        sb.AppendLine();
     }
 
     private static void GenerateSummary(StringBuilder sb, INamedTypeSymbol classSymbol)
@@ -80,7 +99,7 @@ internal class MarkdownGenerator : IDocumentationGenerator
         return $"[{text}]({fileName})";
     }
 
-    private static string EscapePipe(string? input)
+    private static string Escape(string? input)
     {
         string s = input ?? string.Empty;
         return s.Replace("|", "\\|");
