@@ -75,53 +75,6 @@ internal abstract class TableGeneratorBase : ITableGenerator
         }
     }
 
-    protected static string ComposeRootOutputFile(
-        SourceProductionContext context,
-        string requestedPath,
-        string projectDirectory,
-        string repoRoot,
-        LocalFormat fmt,
-        INamedTypeSymbol classSymbol,
-        bool includeNamespaces)
-    {
-        string ext = fmt.ToFileExtension();
-
-        // Resolve base path first (absolute or under project root)
-        string baseProjectRoot = !string.IsNullOrEmpty(projectDirectory) ? projectDirectory : repoRoot;
-        string resolved = Path.IsPathRooted(requestedPath)
-            ? requestedPath
-            : Path.GetFullPath(Path.Combine(baseProjectRoot, requestedPath));
-
-        // Determine if the user provided a directory or a file
-        bool looksLikeDirectory = resolved.EndsWith(Path.DirectorySeparatorChar.ToString())
-                                  || resolved.EndsWith(Path.AltDirectorySeparatorChar.ToString())
-                                  || !Path.HasExtension(resolved)
-                                  || Directory.Exists(resolved);
-
-        if (!looksLikeDirectory)
-        {
-            // The configured output path looks like a file. Only directories are allowed for the outputDirectory option.
-            // Emit a warning and fall back to the containing directory of the provided path (or project root if none).
-            string parentDir = Path.GetDirectoryName(resolved) ?? baseProjectRoot;
-            DiagnosticDescriptor desc = new(DiagnosticIds.OutputDirectoryNotADirectory,
-                "OutputDirectoryMustBeDirectory",
-                "Output path '{0}' looks like a file; only directories are supported. Using directory '{1}' instead.",
-                "DocumentationGenerator", DiagnosticSeverity.Warning, true);
-            Diagnostic diagnostic = Diagnostic.Create(desc, Location.None, requestedPath, parentDir);
-            context.ReportDiagnostic(diagnostic);
-
-            // Treat the parent directory as the resolved directory
-            resolved = parentDir;
-        }
-
-        // Ensure directory exists (create later on write)
-        string directory = resolved.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        string baseName = includeNamespaces ? CreateFileBaseNameWithNamespace(classSymbol) : classSymbol.Name;
-
-        string candidate = Path.Combine(directory, baseName + ext);
-        return candidate;
-    }
-
     protected static string ComposeRootOutputPath(
         SourceProductionContext context,
         string requestedPath,

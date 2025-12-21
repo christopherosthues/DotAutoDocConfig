@@ -5,6 +5,7 @@ namespace DotAutoDocConfig.SourceGenerator.Collectors;
 
 internal abstract class TableCollectorBase
 {
+    // TODO: Delete me
     protected static bool ShouldRecurseInto(INamedTypeSymbol type)
     {
         // Do not recurse into system types or enums or delegates

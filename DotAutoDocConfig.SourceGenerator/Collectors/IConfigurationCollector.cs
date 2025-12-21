@@ -5,6 +5,7 @@ using Models;
 
 internal interface IConfigurationCollector
 {
+    // TODO: Delete me
     // Collects documentation rows for the given root type.
     // Returns a DocumentationTablesModel:
     // - For Inline mode: RootRows contains only leaf rows; TypeTables is empty.

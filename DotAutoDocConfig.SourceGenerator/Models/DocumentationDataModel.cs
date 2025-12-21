@@ -4,6 +4,7 @@ namespace DotAutoDocConfig.SourceGenerator.Models;
 
 internal class DocumentationDataModel
 {
+    // TODO: Delete me
     public INamedTypeSymbol ClassSymbol { get; set; } = null!;
     public string ParameterName { get; set; } = null!;
     public string ParameterType { get; set; } = null!;

@@ -5,6 +5,7 @@ namespace DotAutoDocConfig.SourceGenerator.Models;
 
 internal static class DocumentationDataModelFactory
 {
+    // TODO: Delete me
     public static DocumentationDataModel CreateDocumentationDataModel(
         INamedTypeSymbol classSymbol,
         string parameterName,

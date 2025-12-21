@@ -6,5 +6,5 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 
 internal interface IDocumentationParser
 {
-    IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces);
+    IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces);
 }

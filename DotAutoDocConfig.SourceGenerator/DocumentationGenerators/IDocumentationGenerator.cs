@@ -7,6 +7,7 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
 
 internal interface IDocumentationGenerator
 {
+    // TODO: Delete me
     void Generate(StringBuilder sb, INamedTypeSymbol classSymbol, IEnumerable<DocumentationDataModel> entries, bool includeNamespaces);
 
     void GenerateWithFileLinks(StringBuilder sb, INamedTypeSymbol classSymbol, DocumentationTablesModel tables,

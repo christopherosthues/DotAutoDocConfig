@@ -41,7 +41,7 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
     {
         if (node.TableHeaderDataNodes.Count > 0)
         {
-            _builder.Append("| ");
+            _builder.Append("|");
         }
         foreach (ITableHeaderDataNode dataNode in node.TableHeaderDataNodes)
         {
@@ -66,6 +66,7 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
 
     public void RenderTableHeaderData(ITableHeaderDataNode node)
     {
+        _builder.Append(" ");
         _builder.Append(EscapeMarkdown(node.Content));
         _builder.Append(" |");
     }
@@ -82,7 +83,7 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
     {
         if (node.DataNodes.Count > 0)
         {
-            _builder.Append("| ");
+            _builder.Append("|");
         }
         foreach (ITableDataNode dataNode in node.DataNodes)
         {
@@ -93,6 +94,7 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
 
     public void RenderTableData(ITableDataNode node)
     {
+        _builder.Append(" ");
         _builder.Append(EscapeMarkdown(node.Content));
         _builder.Append(" |");
     }

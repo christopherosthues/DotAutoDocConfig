@@ -8,6 +8,7 @@ namespace DotAutoDocConfig.SourceGenerator.Collectors;
 
 internal class InlineTableCollector : IConfigurationCollector
 {
+    // TODO: Delete me
     public DocumentationTablesModel Collect(INamedTypeSymbol root)
     {
         DocumentationTablesModel tables = new();

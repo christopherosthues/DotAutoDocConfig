@@ -8,6 +8,7 @@ namespace DotAutoDocConfig.SourceGenerator.Collectors;
 
 internal class SeparateTableCollector : IConfigurationCollector
 {
+    // TODO: Delete me
     // Collect root rows and per-type tables (Tables mode). Deduplicates reused classes by symbol.
     public DocumentationTablesModel Collect(INamedTypeSymbol root)
     {

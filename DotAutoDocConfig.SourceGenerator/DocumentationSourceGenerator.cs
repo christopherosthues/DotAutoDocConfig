@@ -154,10 +154,6 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
                 repoRoot = Path.GetDirectoryName(filePath) ?? string.Empty;
             }
 
-#pragma warning disable CS8620
-            context.LogInfo("RepoRoot resolved: {0}; ProjectName: {1}", repoRoot, string.IsNullOrEmpty(projectName) ? "(empty)" : projectName);
-#pragma warning restore CS8620
-
             // Get per-attribute documentation options
             (INamedTypeSymbol? symbol, List<DocumentationOptionsDataModel> docs) = GetDocumentationDataModels(compilation, classDeclarationSyntax);
             if (symbol is null)

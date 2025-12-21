@@ -8,7 +8,7 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 
 internal class InlineTableParser : IDocumentationParser
 {
-    public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces)
+    public IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces)
     {
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
@@ -32,7 +32,7 @@ internal class InlineTableParser : IDocumentationParser
 
         RecurseNodes(namedTypeSymbol, string.Empty, visited, root);
 
-        return [root];
+        return [(namedTypeSymbol, root)];
     }
 
     private void RecurseNodes(INamedTypeSymbol? current, string prefix, HashSet<INamedTypeSymbol> visited, IDocumentationNode root)
@@ -104,9 +104,9 @@ internal class InlineTableParser : IDocumentationParser
         tableRow.DataNodes.Add(new TableDataNode(parameterName));
         tableRow.DataNodes.Add(new TableDataNode(property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
         tableRow.DataNodes.Add(new TableDataNode(property.GetDefaultValue()));
-        tableRow.DataNodes.Add(new TableDataNode(property.GetSummary()));
         tableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(property.GetExampleFromXml())
             ? property.Type.GetExampleValue()
             : property.GetExampleFromXml()));
+        tableRow.DataNodes.Add(new TableDataNode(property.GetSummary()));
     }
 }

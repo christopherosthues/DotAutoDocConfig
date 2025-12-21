@@ -8,6 +8,7 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
 
 internal class MarkdownGenerator : IDocumentationGenerator
 {
+    // TODO: Delete me
     public void Generate(StringBuilder sb, INamedTypeSymbol classSymbol, IEnumerable<DocumentationDataModel> entries, bool includeNamespaces)
     {
         GenerateRootTableHeader(sb, classSymbol, includeNamespaces);

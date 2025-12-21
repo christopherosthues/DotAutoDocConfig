@@ -8,9 +8,9 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 
 internal class SeparateTableParser : IDocumentationParser
 {
-    public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces)
+    public IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces)
     {
-        List<IDocumentationNode> allNodes = [];
+        List<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> allNodes = [];
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
         DocumentationNode root = new()
@@ -31,7 +31,7 @@ internal class SeparateTableParser : IDocumentationParser
         root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Example Value"));
         root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Description"));
 
-        allNodes.Add(root);
+        allNodes.Add((namedTypeSymbol, root));
 
         RecurseNodes(namedTypeSymbol, visited, root, allNodes, includeNamespaces);
 
@@ -39,7 +39,7 @@ internal class SeparateTableParser : IDocumentationParser
     }
 
     private static void RecurseNodes(INamedTypeSymbol? current, HashSet<INamedTypeSymbol> visited,
-        IDocumentationNode node, IList<IDocumentationNode> allNodes,
+        IDocumentationNode node, IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> allNodes,
         bool includeNamespaces)
     {
         if (current is null)
@@ -59,7 +59,8 @@ internal class SeparateTableParser : IDocumentationParser
     }
 
     private static void ParseProperty(HashSet<INamedTypeSymbol> visited,
-        IDocumentationNode node, IPropertySymbol property, IList<IDocumentationNode> allNodes, bool includeNamespaces)
+        IDocumentationNode node, IPropertySymbol property,
+        IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> allNodes, bool includeNamespaces)
     {
         // Only public properties
         if (property.DeclaredAccessibility != Accessibility.Public)
@@ -97,6 +98,17 @@ internal class SeparateTableParser : IDocumentationParser
         // If the property type is a class/record (and not system/primitive), recurse into it
         if (propertyType is INamedTypeSymbol namedType && namedType.IsCustomClass())
         {
+            ITableRowNode customTableRow = new TableRowNode();
+            customTableRow.DataNodes.Add(new TableDataNode(parameterName));
+            // TODO: file link for complex types
+            customTableRow.DataNodes.Add(new TableDataNode(property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
+            customTableRow.DataNodes.Add(new TableDataNode(property.GetDefaultValue()));
+            customTableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(property.GetExampleFromXml())
+                ? property.Type.GetExampleValue()
+                : property.GetExampleFromXml()));
+            customTableRow.DataNodes.Add(new TableDataNode(property.GetSummary()));
+            node.Table.Body.TableRows.Add(customTableRow);
+
             DocumentationNode root = new()
             {
                 Title = new TitleNode(namedType.FriendlyQualifiedName(includeNamespaces))
@@ -114,7 +126,7 @@ internal class SeparateTableParser : IDocumentationParser
             root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Example Value"));
             root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Description"));
 
-            allNodes.Add(root);
+            allNodes.Add((namedType, root));
 
             // Recurse into child properties using the parameter name as prefix
             RecurseNodes(namedType, visited, root, allNodes, includeNamespaces);
