@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
+using DotAutoDocConfig.SourceGenerator.Extensions;
 using DotAutoDocConfig.SourceGenerator.Models;
 using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.Collectors;
 
-internal class InlineTableCollector : TableCollectorBase, IConfigurationCollector
+internal class InlineTableCollector : IConfigurationCollector
 {
     public DocumentationTablesModel Collect(INamedTypeSymbol root)
     {
@@ -73,7 +74,7 @@ internal class InlineTableCollector : TableCollectorBase, IConfigurationCollecto
             }
 
             // If the property type is a class/record (and not system/primitive), recurse into it
-            if (propType is INamedTypeSymbol namedType && ShouldRecurseInto(namedType))
+            if (propType is INamedTypeSymbol namedType && namedType.IsCustomClass())
             {
                 // Recurse into child properties using the parameter name as prefix
                 Recurse(namedType, parameterName, visited, root, result);
@@ -82,7 +83,7 @@ internal class InlineTableCollector : TableCollectorBase, IConfigurationCollecto
 
             // Otherwise emit a documentation entry for this property
             DocumentationDataModel model =
-                DocumentationDataModelFactory.CreateLeafDocumentationDataModel(root, parameterName, member);
+                DocumentationDataModelFactory.CreateDocumentationDataModel(root, parameterName, member);
 
             result.Add(model);
         }

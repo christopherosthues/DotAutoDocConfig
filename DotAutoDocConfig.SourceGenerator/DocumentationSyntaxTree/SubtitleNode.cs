@@ -2,9 +2,9 @@ using DotAutoDocConfig.SourceGenerator.Renderers;
 
 namespace DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 
-internal class SubtitleNode : ISubtitleNode
+internal class SubtitleNode(string content) : ISubtitleNode
 {
     public void Accept(IDocumentationRenderer renderer) => renderer.RenderSubtitle(this);
 
-    public string Subtitle { get; }
+    public string Content { get; } = content;
 }

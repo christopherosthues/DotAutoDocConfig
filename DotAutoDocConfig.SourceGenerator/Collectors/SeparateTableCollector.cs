@@ -1,21 +1,22 @@
 using System.Collections.Generic;
 using System.Linq;
+using DotAutoDocConfig.SourceGenerator.Extensions;
 using DotAutoDocConfig.SourceGenerator.Models;
 using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.Collectors;
 
-internal class SeparateTableCollector : TableCollectorBase, IConfigurationCollector
+internal class SeparateTableCollector : IConfigurationCollector
 {
     // Collect root rows and per-type tables (Tables mode). Deduplicates reused classes by symbol.
     public DocumentationTablesModel Collect(INamedTypeSymbol root)
     {
         DocumentationTablesModel model = new();
-        BuildRows(root, string.Empty, model.RootRows, model.TypeTables);
+        BuildRows(root, model.RootRows, model.TypeTables);
         return model;
     }
 
-    private static void BuildRows(INamedTypeSymbol current, string prefix, List<TableRow> rows,
+    private static void BuildRows(INamedTypeSymbol current, List<TableRow> rows,
         Dictionary<INamedTypeSymbol, List<TableRow>> typeTables)
     {
         foreach (IPropertySymbol member in current.GetMembers().OfType<IPropertySymbol>())
@@ -33,8 +34,7 @@ internal class SeparateTableCollector : TableCollectorBase, IConfigurationCollec
             }
 
             string formattedName = member.Name;
-            string separator = ":"; // JsonShort notation
-            string parameterName = string.IsNullOrEmpty(prefix) ? formattedName : prefix + separator + formattedName;
+            string parameterName = formattedName;
 
             ITypeSymbol propType = member.Type;
             if (propType is IArrayTypeSymbol arrayType)
@@ -50,7 +50,7 @@ internal class SeparateTableCollector : TableCollectorBase, IConfigurationCollec
                 }
             }
 
-            if (propType is INamedTypeSymbol namedType && ShouldRecurseInto(namedType))
+            if (propType is INamedTypeSymbol namedType && namedType.IsCustomClass())
             {
                 // complex property -> add a row that links to namedType's table
                 DocumentationDataModel baseData =
@@ -63,7 +63,7 @@ internal class SeparateTableCollector : TableCollectorBase, IConfigurationCollec
                 {
                     List<TableRow> subRows = [];
                     typeTables[namedType] = subRows;
-                    BuildRows(namedType, string.Empty, subRows, typeTables);
+                    BuildRows(namedType, subRows, typeTables);
                 }
 
                 continue;
@@ -71,7 +71,7 @@ internal class SeparateTableCollector : TableCollectorBase, IConfigurationCollec
 
             // leaf property -> plain row
             DocumentationDataModel model =
-                DocumentationDataModelFactory.CreateLeafDocumentationDataModel(current, parameterName, member);
+                DocumentationDataModelFactory.CreateDocumentationDataModel(current, parameterName, member);
 
             rows.Add(new TableRow { Data = model, ComplexTarget = null });
         }

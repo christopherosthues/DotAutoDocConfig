@@ -1,4 +1,5 @@
 using DotAutoDocConfig.SourceGenerator.Renderers;
+using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 
@@ -15,8 +16,9 @@ internal class DocumentationNode : IDocumentationNode
         Table.Accept(renderer);
     }
 
-    public ITitleNode Title { get; }
-    public ISubtitleNode? Subtitle { get; }
-    public ISummaryNode Summary { get; }
-    public ITableNode Table { get; }
+    public INamedTypeSymbol Type { get; }
+    public ITitleNode Title { get; set; }
+    public ISubtitleNode? Subtitle { get; set; }
+    public ISummaryNode Summary { get; set; }
+    public ITableNode Table { get; set; } = new TableNode();
 }

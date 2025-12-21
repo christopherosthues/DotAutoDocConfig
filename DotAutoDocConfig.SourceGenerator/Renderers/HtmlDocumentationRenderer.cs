@@ -2,7 +2,7 @@ using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 
 namespace DotAutoDocConfig.SourceGenerator.Renderers;
 
-internal class AsciiDocDocumentationRenderer : IDocumentationRenderer
+internal class HtmlDocumentationRenderer : IDocumentationRenderer
 {
     public void RenderTitle(ITitleNode node) => throw new System.NotImplementedException();
 

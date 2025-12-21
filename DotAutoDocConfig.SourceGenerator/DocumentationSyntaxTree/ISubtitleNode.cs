@@ -1,6 +1,3 @@
 namespace DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 
-internal interface ISubtitleNode : ILeafNode
-{
-    string Subtitle { get; }
-}
+internal interface ISubtitleNode : ILeafNode;

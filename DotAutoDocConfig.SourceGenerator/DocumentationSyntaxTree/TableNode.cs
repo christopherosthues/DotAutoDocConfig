@@ -6,6 +6,6 @@ internal class TableNode : ITableNode
 {
     public void Accept(IDocumentationRenderer renderer) => renderer.RenderTable(this);
 
-    public ITableHeaderNode Header { get; }
-    public ITableBodyNode Body { get; }
+    public ITableHeaderNode Header { get; } = new TableHeaderNode();
+    public ITableBodyNode Body { get; } = new TableBodyNode();
 }
