@@ -124,6 +124,7 @@ internal class SeparateTableParser : IDocumentationParser
         // Otherwise emit a documentation entry for this property
         ITableRowNode tableRow = new TableRowNode();
         tableRow.DataNodes.Add(new TableDataNode(parameterName));
+        // TODO: file link for complex types
         tableRow.DataNodes.Add(new TableDataNode(property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
         tableRow.DataNodes.Add(new TableDataNode(property.GetDefaultValue()));
         tableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(property.GetExampleFromXml())

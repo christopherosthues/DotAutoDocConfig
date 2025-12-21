@@ -1,10 +1,12 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using DotAutoDocConfig.SourceGenerator.Collectors;
 using DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
 using DotAutoDocConfig.SourceGenerator.DocumentationParser;
 using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
+using DotAutoDocConfig.SourceGenerator.Extensions;
 using DotAutoDocConfig.SourceGenerator.Models;
 using DotAutoDocConfig.SourceGenerator.Renderers;
 using Microsoft.CodeAnalysis;
@@ -32,15 +34,16 @@ internal class InlineTableGenerator : TableGeneratorBase
         // documentationGenerator.Generate(sb, classSymbol, entries, docOptions.IncludeNamespaces);
 
         // Resolve root output path and write
-        string rootFullPath = ComposeRootOutputPath(
+        string directory = ComposeRootOutputPath(
             context,
             docOptions.OutputDirectory,
             projectDirectory,
-            repoRoot,
-            fmt,
-            classSymbol,
-            docOptions.IncludeNamespaces);
+            repoRoot);
+        string ext = fmt.ToFileExtension();
 
-        WriteResolvedFile(context, rootFullPath, documentationRenderer.GetResult());
+        string baseName = docOptions.IncludeNamespaces ? CreateFileBaseNameWithNamespace(classSymbol) : classSymbol.Name;
+        string candidate = Path.Combine(directory, baseName, ext);
+
+        WriteResolvedFile(context, candidate, documentationRenderer.GetResult());
     }
 }

@@ -1,6 +1,3 @@
 namespace DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 
-internal interface ITableHeaderDataNode : ILeafNode
-{
-    string Content { get; }
-}
+internal interface ITableHeaderDataNode : ILeafNode;

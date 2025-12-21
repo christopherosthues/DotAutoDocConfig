@@ -60,6 +60,8 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
         {
             _builder.Append("--- |");
         }
+
+        _builder.AppendLine();
     }
 
     public void RenderTableHeaderData(ITableHeaderDataNode node)
