@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using DotAutoDocConfig.SourceGenerator.Collectors;
 using DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
+using DotAutoDocConfig.SourceGenerator.DocumentationParser;
 using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 using DotAutoDocConfig.SourceGenerator.Extensions;
 using DotAutoDocConfig.SourceGenerator.Models;
@@ -19,10 +20,12 @@ internal class SeparateTableGenerator : TableGeneratorBase
     {
         // StringBuilder sb = new();
         LocalFormat fmt = (LocalFormat)docOptions.Format;
-        IDocumentationGenerator documentationGenerator = DocumentationGeneratorFactory.CreateGenerator(fmt);
+        // IDocumentationGenerator documentationGenerator = DocumentationGeneratorFactory.CreateGenerator(fmt);
         IDocumentationRenderer documentationRenderer = DocumentationRendererFactory.CreateRenderer(fmt);
-        IConfigurationCollector configurationCollector = new SeparateTableCollector();
-        DocumentationTablesModel tables = configurationCollector.Collect(classSymbol);
+        // IConfigurationCollector configurationCollector = new SeparateTableCollector();
+        // DocumentationTablesModel tables = configurationCollector.Collect(classSymbol);
+        IDocumentationParser documentationParser = new SeparateTableParser();
+        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions.IncludeNamespaces);
 
         // Prepare file names for each type table
         Dictionary<INamedTypeSymbol, string> typeToFileName = new(SymbolEqualityComparer.Default);

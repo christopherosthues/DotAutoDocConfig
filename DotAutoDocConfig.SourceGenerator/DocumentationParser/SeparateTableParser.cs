@@ -126,9 +126,10 @@ internal class SeparateTableParser : IDocumentationParser
         tableRow.DataNodes.Add(new TableDataNode(parameterName));
         tableRow.DataNodes.Add(new TableDataNode(property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
         tableRow.DataNodes.Add(new TableDataNode(property.GetDefaultValue()));
-        tableRow.DataNodes.Add(new TableDataNode(property.GetSummary()));
         tableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(property.GetExampleFromXml())
             ? property.Type.GetExampleValue()
             : property.GetExampleFromXml()));
+        tableRow.DataNodes.Add(new TableDataNode(property.GetSummary()));
+        node.Table.Body.TableRows.Add(tableRow);
     }
 }

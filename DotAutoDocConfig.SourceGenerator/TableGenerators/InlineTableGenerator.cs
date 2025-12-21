@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using DotAutoDocConfig.SourceGenerator.Collectors;
 using DotAutoDocConfig.SourceGenerator.DocumentationGenerators;
+using DotAutoDocConfig.SourceGenerator.DocumentationParser;
 using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 using DotAutoDocConfig.SourceGenerator.Models;
 using DotAutoDocConfig.SourceGenerator.Renderers;
@@ -18,13 +19,15 @@ internal class InlineTableGenerator : TableGeneratorBase
     {
         // Convert RootRows into DocumentationDataModel list for existing generator method
         LocalFormat fmt = (LocalFormat)docOptions.Format;
-        IDocumentationGenerator documentationGenerator = DocumentationGeneratorFactory.CreateGenerator(fmt);
+        // IDocumentationGenerator documentationGenerator = DocumentationGeneratorFactory.CreateGenerator(fmt);
         IDocumentationRenderer documentationRenderer = DocumentationRendererFactory.CreateRenderer(fmt);
-        IConfigurationCollector configurationCollector = new InlineTableCollector();
-        DocumentationTablesModel tables = configurationCollector.Collect(classSymbol);
-        List<DocumentationDataModel> entries = [..tables.RootRows.Select(row => row.Data)];
+        // IConfigurationCollector configurationCollector = new InlineTableCollector();
+        // DocumentationTablesModel tables = configurationCollector.Collect(classSymbol);
+        // List<DocumentationDataModel> entries = [..tables.RootRows.Select(row => row.Data)];
+        IDocumentationParser documentationParser = new InlineTableParser();
+        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions.IncludeNamespaces);
 
-        IDocumentationNode node = null!;
+        IDocumentationNode node = trees.First();
         node.Accept(documentationRenderer);
         // documentationGenerator.Generate(sb, classSymbol, entries, docOptions.IncludeNamespaces);
 
