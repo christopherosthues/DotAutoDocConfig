@@ -20,7 +20,7 @@ internal class SeparateTableParser : IDocumentationParser
         };
 
         string summaryContent = namedTypeSymbol.GetSummary();
-        if (string.IsNullOrEmpty(summaryContent))
+        if (!string.IsNullOrEmpty(summaryContent))
         {
             root.Summary = new SummaryNode(summaryContent);
         }

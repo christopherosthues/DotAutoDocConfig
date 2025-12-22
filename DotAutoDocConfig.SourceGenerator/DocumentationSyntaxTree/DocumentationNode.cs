@@ -7,16 +7,13 @@ internal class DocumentationNode : IDocumentationNode
     public void Accept(IDocumentationRenderer renderer)
     {
         Title.Accept(renderer);
-        if (Subtitle is not null)
-        {
-            Subtitle.Accept(renderer);
-        }
-        Summary.Accept(renderer);
+        Subtitle?.Accept(renderer);
+        Summary?.Accept(renderer);
         Table.Accept(renderer);
     }
 
-    public ITitleNode Title { get; set; }
+    public ITitleNode Title { get; set; } = new TitleNode(string.Empty);
     public ISubtitleNode? Subtitle { get; set; }
-    public ISummaryNode Summary { get; set; }
+    public ISummaryNode? Summary { get; set; }
     public ITableNode Table { get; set; } = new TableNode();
 }

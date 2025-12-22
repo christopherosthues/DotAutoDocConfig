@@ -18,7 +18,6 @@ internal static class SymbolExtensions
                 if (string.IsNullOrEmpty(xml))
                 {
                     return string.Empty;
-                    // return "no XML documentation";
                 }
 
                 try
@@ -29,7 +28,6 @@ internal static class SymbolExtensions
                     {
                         string text = summaryEl.Value;
                         return NormalizeWhitespace(StripXmlLikeText(text));
-                        // return "direct read from XML";
                     }
                 }
                 catch
@@ -39,17 +37,14 @@ internal static class SymbolExtensions
                     {
                         string onlySummary = m.Groups["c"].Value;
                         return NormalizeWhitespace(StripXmlLikeText(onlySummary));
-                        //return "regex read from XML";
                     }
                 }
 
                 return string.Empty;
-                // return "no summary found";
             }
             catch
             {
                 return string.Empty;
-                // return "exception occurred";
             }
         }
 
@@ -61,7 +56,6 @@ internal static class SymbolExtensions
                 if (string.IsNullOrEmpty(xml))
                 {
                     return string.Empty;
-                    // return "no XML documentation";
                 }
 
                 try
@@ -72,7 +66,6 @@ internal static class SymbolExtensions
                     {
                         string text = exEl.Value;
                         return NormalizeWhitespace(StripXmlLikeText(text));
-                        //return "direct read from XML";
                     }
                 }
                 catch
@@ -82,17 +75,14 @@ internal static class SymbolExtensions
                     {
                         string onlyExample = m.Groups["c"].Value;
                         return NormalizeWhitespace(StripXmlLikeText(onlyExample));
-                        //return "regex read from XML";
                     }
                 }
 
                 return string.Empty;
-                // return "no example found";
             }
             catch
             {
                 return string.Empty;
-                // return "exception occurred";
             }
         }
     }

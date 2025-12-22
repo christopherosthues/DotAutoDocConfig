@@ -16,17 +16,12 @@ internal class InlineTableGenerator : TableGeneratorBase
         INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot)
     {
         LocalFormat fmt = (LocalFormat)docOptions.Format;
-        // IDocumentationGenerator documentationGenerator = DocumentationGeneratorFactory.CreateGenerator(fmt);
         IDocumentationRenderer documentationRenderer = DocumentationRendererFactory.CreateRenderer(fmt);
-        // IConfigurationCollector configurationCollector = new InlineTableCollector();
-        // DocumentationTablesModel tables = configurationCollector.Collect(classSymbol);
-        // List<DocumentationDataModel> entries = [..tables.RootRows.Select(row => row.Data)];
         IDocumentationParser documentationParser = new InlineTableParser();
         IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> trees = documentationParser.Parse(classSymbol, docOptions.IncludeNamespaces);
 
         (INamedTypeSymbol symbol, IDocumentationNode tree) = trees.First();
         tree.Accept(documentationRenderer);
-        // documentationGenerator.Generate(sb, classSymbol, entries, docOptions.IncludeNamespaces);
 
         // Resolve root output path and write
         string directory = ComposeRootOutputPath(
@@ -37,7 +32,7 @@ internal class InlineTableGenerator : TableGeneratorBase
         string ext = fmt.ToFileExtension();
 
         string baseName = docOptions.IncludeNamespaces ? CreateFileBaseNameWithNamespace(symbol) : symbol.Name;
-        string candidate = Path.Combine(directory, baseName, ext);
+        string candidate = Path.Combine(directory, baseName + ext);
 
         WriteResolvedFile(context, candidate, documentationRenderer.GetResult());
     }
