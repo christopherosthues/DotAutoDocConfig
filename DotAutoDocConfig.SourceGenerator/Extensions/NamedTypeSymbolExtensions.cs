@@ -1,4 +1,5 @@
 ﻿using System;
+using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.Extensions;
@@ -44,6 +45,33 @@ internal static class NamedTypeSymbolExtensions
 
             // Treat records/classes defined in user's code as custom classes
             return true;
+        }
+
+        public IDocumentationNode CreateDocumentationNode(bool includeNamespaces, bool isRoot)
+        {
+            DocumentationNode node = new()
+            {
+                Title = new TitleNode(isRoot ? "Configuration Documentation" : typeSymbol.FriendlyQualifiedName(includeNamespaces))
+            };
+
+            if (isRoot)
+            {
+                node.Subtitle = new SubtitleNode(typeSymbol.FriendlyQualifiedName(includeNamespaces));
+            }
+
+            string summaryContent = typeSymbol.GetSummary();
+            if (string.IsNullOrEmpty(summaryContent))
+            {
+                node.Summary = new SummaryNode(summaryContent);
+            }
+
+            node.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Parameter Name"));
+            node.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Parameter Type"));
+            node.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Default Value"));
+            node.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Example Value"));
+            node.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Description"));
+
+            return node;
         }
     }
 }

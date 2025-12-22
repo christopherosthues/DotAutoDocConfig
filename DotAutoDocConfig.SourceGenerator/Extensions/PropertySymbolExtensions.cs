@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -37,6 +38,34 @@ internal static class PropertySymbolExtensions
             {
                 return string.Empty;
             }
+        }
+
+        public ITableRowNode CreateTableRowNode(string parameterName)
+        {
+            ITableRowNode tableRow = new TableRowNode();
+            tableRow.DataNodes.Add(new TableDataNode(parameterName));
+            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
+            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.GetDefaultValue()));
+            tableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(propertySymbol.GetExampleFromXml())
+                ? propertySymbol.Type.GetExampleValue()
+                : propertySymbol.GetExampleFromXml()));
+            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.GetSummary()));
+
+            return tableRow;
+        }
+
+        public ITableRowNode CreateTableRowNodeWithLink(string parameterName)
+        {
+            ITableRowNode tableRow = new TableRowNode();
+            tableRow.DataNodes.Add(new TableDataNode(parameterName));
+            // TODO: file link for complex types
+            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
+            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.GetDefaultValue()));
+            tableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(propertySymbol.GetExampleFromXml())
+                ? propertySymbol.Type.GetExampleValue()
+                : propertySymbol.GetExampleFromXml()));
+            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.GetSummary()));
+            return tableRow;
         }
     }
 }

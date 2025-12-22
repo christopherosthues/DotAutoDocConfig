@@ -12,23 +12,8 @@ internal class InlineTableParser : IDocumentationParser
     {
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
-        DocumentationNode root = new()
-        {
-            Title = new TitleNode("Configuration Documentation"),
-            Subtitle = new SubtitleNode(namedTypeSymbol.FriendlyQualifiedName(includeNamespaces))
-        };
-
-        string summaryContent = namedTypeSymbol.GetSummary();
-        if (!string.IsNullOrEmpty(summaryContent))
-        {
-            root.Summary = new SummaryNode(summaryContent);
-        }
-
-        root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Parameter Name"));
-        root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Parameter Type"));
-        root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Default Value"));
-        root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Example Value"));
-        root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Description"));
+        const bool isRoot = true;
+        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(includeNamespaces, isRoot);
 
         RecurseNodes(namedTypeSymbol, string.Empty, visited, root);
 
@@ -100,13 +85,7 @@ internal class InlineTableParser : IDocumentationParser
         }
 
         // Otherwise emit a documentation entry for this property
-        ITableRowNode tableRow = new TableRowNode();
-        tableRow.DataNodes.Add(new TableDataNode(parameterName));
-        tableRow.DataNodes.Add(new TableDataNode(property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
-        tableRow.DataNodes.Add(new TableDataNode(property.GetDefaultValue()));
-        tableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(property.GetExampleFromXml())
-            ? property.Type.GetExampleValue()
-            : property.GetExampleFromXml()));
-        tableRow.DataNodes.Add(new TableDataNode(property.GetSummary()));
+        ITableRowNode tableRow = property.CreateTableRowNode(parameterName);
+        node.Table.Body.TableRows.Add(tableRow);
     }
 }

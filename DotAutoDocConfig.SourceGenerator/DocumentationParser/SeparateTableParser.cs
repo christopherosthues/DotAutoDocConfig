@@ -13,23 +13,8 @@ internal class SeparateTableParser : IDocumentationParser
         List<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> allNodes = [];
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
-        DocumentationNode root = new()
-        {
-            Title = new TitleNode("Configuration Documentation"),
-            Subtitle = new SubtitleNode(namedTypeSymbol.FriendlyQualifiedName(includeNamespaces))
-        };
-
-        string summaryContent = namedTypeSymbol.GetSummary();
-        if (!string.IsNullOrEmpty(summaryContent))
-        {
-            root.Summary = new SummaryNode(summaryContent);
-        }
-
-        root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Parameter Name"));
-        root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Parameter Type"));
-        root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Default Value"));
-        root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Example Value"));
-        root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Description"));
+        const bool isRoot = true;
+        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(includeNamespaces, isRoot);
 
         allNodes.Add((namedTypeSymbol, root));
 
@@ -98,33 +83,11 @@ internal class SeparateTableParser : IDocumentationParser
         // If the property type is a class/record (and not system/primitive), recurse into it
         if (propertyType is INamedTypeSymbol namedType && namedType.IsCustomClass())
         {
-            ITableRowNode customTableRow = new TableRowNode();
-            customTableRow.DataNodes.Add(new TableDataNode(parameterName));
-            // TODO: file link for complex types
-            customTableRow.DataNodes.Add(new TableDataNode(property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
-            customTableRow.DataNodes.Add(new TableDataNode(property.GetDefaultValue()));
-            customTableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(property.GetExampleFromXml())
-                ? property.Type.GetExampleValue()
-                : property.GetExampleFromXml()));
-            customTableRow.DataNodes.Add(new TableDataNode(property.GetSummary()));
+            ITableRowNode customTableRow = property.CreateTableRowNodeWithLink(parameterName);
             node.Table.Body.TableRows.Add(customTableRow);
 
-            DocumentationNode root = new()
-            {
-                Title = new TitleNode(namedType.FriendlyQualifiedName(includeNamespaces))
-            };
-
-            string summaryContent = namedType.GetSummary();
-            if (string.IsNullOrEmpty(summaryContent))
-            {
-                root.Summary = new SummaryNode(summaryContent);
-            }
-
-            root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Parameter Name"));
-            root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Parameter Type"));
-            root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Default Value"));
-            root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Example Value"));
-            root.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Description"));
+            const bool isRoot = false;
+            IDocumentationNode root = namedType.CreateDocumentationNode(includeNamespaces, isRoot);
 
             allNodes.Add((namedType, root));
 
@@ -134,15 +97,7 @@ internal class SeparateTableParser : IDocumentationParser
         }
 
         // Otherwise emit a documentation entry for this property
-        ITableRowNode tableRow = new TableRowNode();
-        tableRow.DataNodes.Add(new TableDataNode(parameterName));
-        // TODO: file link for complex types
-        tableRow.DataNodes.Add(new TableDataNode(property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
-        tableRow.DataNodes.Add(new TableDataNode(property.GetDefaultValue()));
-        tableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(property.GetExampleFromXml())
-            ? property.Type.GetExampleValue()
-            : property.GetExampleFromXml()));
-        tableRow.DataNodes.Add(new TableDataNode(property.GetSummary()));
+        ITableRowNode tableRow = property.CreateTableRowNode(parameterName);
         node.Table.Body.TableRows.Add(tableRow);
     }
 }
