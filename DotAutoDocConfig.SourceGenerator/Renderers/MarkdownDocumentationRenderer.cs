@@ -7,22 +7,17 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
 {
     private readonly StringBuilder _builder = new();
 
-    public void RenderTitle(ITitleNode node) => _builder.AppendLine($"# {EscapeMarkdown(node.Content)}");
+    public void RenderTitle(ITitleNode node) => _builder.AppendLine($"# {EscapeMarkdown(node.Content)}").AppendLine();
 
-    public void RenderSubtitle(ISubtitleNode node)
-    {
-        _builder.AppendLine();
-        _builder.AppendLine($"## {EscapeMarkdown(node.Content)}");
-    }
+    public void RenderSubtitle(ISubtitleNode node) =>
+        _builder.AppendLine($"## {EscapeMarkdown(node.Content)}").AppendLine();
 
     public void RenderSummary(ISummaryNode node)
     {
         if (!string.IsNullOrEmpty(node.Content))
         {
-            _builder.AppendLine();
-            _builder.AppendLine(node.Content);
+            _builder.AppendLine(node.Content).AppendLine();
         }
-        _builder.AppendLine();
     }
 
     public void RenderTable(ITableNode node)
@@ -64,12 +59,8 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
         _builder.AppendLine();
     }
 
-    public void RenderTableHeaderData(ITableHeaderDataNode node)
-    {
-        _builder.Append(" ");
-        _builder.Append(EscapeMarkdown(node.Content));
-        _builder.Append(" |");
-    }
+    public void RenderTableHeaderData(ITableHeaderDataNode node) =>
+        _builder.Append(" ").Append(EscapeMarkdown(node.Content)).Append(" |");
 
     public void RenderTableBody(ITableBodyNode node)
     {
@@ -92,12 +83,8 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
         _builder.AppendLine();
     }
 
-    public void RenderTableData(ITableDataNode node)
-    {
-        _builder.Append(" ");
-        _builder.Append(EscapeMarkdown(node.Content));
-        _builder.Append(" |");
-    }
+    public void RenderTableData(ITableDataNode node) =>
+        _builder.Append(" ").Append(EscapeMarkdown(node.Content)).Append(" |");
 
     public string GetResult() => _builder.ToString();
 

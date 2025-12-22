@@ -60,7 +60,7 @@ internal static class NamedTypeSymbolExtensions
             }
 
             string summaryContent = typeSymbol.GetSummary();
-            if (string.IsNullOrEmpty(summaryContent))
+            if (!string.IsNullOrEmpty(summaryContent))
             {
                 node.Summary = new SummaryNode(summaryContent);
             }
