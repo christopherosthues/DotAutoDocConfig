@@ -74,4 +74,14 @@ internal class AsciiDocDocumentationRenderer : IDocumentationRenderer
             .Replace("\n", " ")
             .Replace("\r", " ");
     }
+
+    // private static string LinkToFile(string text, INamedTypeSymbol target, Dictionary<INamedTypeSymbol, string> typeToFileName)
+    // {
+    //     string name = row.ComplexTarget is null
+    //         ? model.ParameterName
+    //         : LinkToFile(model.ParameterName, row.ComplexTarget!, typeToFileName);
+    //
+    //     string fileName = typeToFileName[target];
+    //     return $"xref:{fileName}[{text}]";
+    // }
 }
