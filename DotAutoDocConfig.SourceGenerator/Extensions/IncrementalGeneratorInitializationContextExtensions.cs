@@ -21,13 +21,7 @@ internal static class IncrementalGeneratorInitializationContextExtensions
                         projectDirectory = string.Empty;
                     }
 
-                    if (!opts.TryGetValue("build_property.MSBuildProjectName", out string? projectName) &&
-                        !opts.TryGetValue("build_property.rootnamespace", out projectName))
-                    {
-                        projectName = string.Empty;
-                    }
-
-                    return new BuildProperties(projectDirectory, projectName);
+                    return new BuildProperties(projectDirectory);
                 });
             return buildProps;
         }

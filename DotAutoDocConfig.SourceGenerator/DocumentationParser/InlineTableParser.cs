@@ -8,16 +8,15 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 
 internal class InlineTableParser : IDocumentationParser
 {
-    public IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces)
+    public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces)
     {
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
-        const bool isRoot = true;
-        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(includeNamespaces, isRoot);
+        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(includeNamespaces);
 
         RecurseNodes(namedTypeSymbol, string.Empty, visited, root);
 
-        return [(namedTypeSymbol, root)];
+        return [root];
     }
 
     private void RecurseNodes(INamedTypeSymbol? current, string prefix, HashSet<INamedTypeSymbol> visited, IDocumentationNode root)

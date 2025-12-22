@@ -11,7 +11,7 @@ namespace DotAutoDocConfig.SourceGenerator.TableGenerators;
 internal abstract class TableGeneratorBase : ITableGenerator
 {
     public abstract void GenerateTable(DocumentationOptionsDataModel docOptions, SourceProductionContext context,
-        INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot);
+        INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot, IList<string> filePaths);
 
     protected static string CreateFileBaseNameWithNamespace(INamedTypeSymbol symbol)
     {

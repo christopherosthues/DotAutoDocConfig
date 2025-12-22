@@ -10,9 +10,6 @@ internal class HtmlDocumentationRenderer : IDocumentationRenderer
     public void RenderTitle(ITitleNode node) =>
         _builder.Append("<h1>").Append(EscapeHtml(node.Content)).AppendLine("</h1>").AppendLine();
 
-    public void RenderSubtitle(ISubtitleNode node) =>
-        _builder.Append("<h2>").Append(EscapeHtml(node.Content)).AppendLine("</h2>").AppendLine();
-
     public void RenderSummary(ISummaryNode node)
     {
         if (!string.IsNullOrEmpty(node.Content))

@@ -8,15 +8,14 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 
 internal class SeparateTableParser : IDocumentationParser
 {
-    public IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces)
+    public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces)
     {
-        List<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> allNodes = [];
+        List<IDocumentationNode> allNodes = [];
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
-        const bool isRoot = true;
-        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(includeNamespaces, isRoot);
+        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(includeNamespaces);
 
-        allNodes.Add((namedTypeSymbol, root));
+        allNodes.Add(root);
 
         RecurseNodes(namedTypeSymbol, visited, root, allNodes, includeNamespaces);
 
@@ -24,7 +23,7 @@ internal class SeparateTableParser : IDocumentationParser
     }
 
     private static void RecurseNodes(INamedTypeSymbol? current, HashSet<INamedTypeSymbol> visited,
-        IDocumentationNode node, IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> allNodes,
+        IDocumentationNode node, IList<IDocumentationNode> allNodes,
         bool includeNamespaces)
     {
         if (current is null)
@@ -45,7 +44,7 @@ internal class SeparateTableParser : IDocumentationParser
 
     private static void ParseProperty(HashSet<INamedTypeSymbol> visited,
         IDocumentationNode node, IPropertySymbol property,
-        IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> allNodes, bool includeNamespaces)
+        IList<IDocumentationNode> allNodes, bool includeNamespaces)
     {
         // Only public properties
         if (property.DeclaredAccessibility != Accessibility.Public)
@@ -86,10 +85,9 @@ internal class SeparateTableParser : IDocumentationParser
             ITableRowNode customTableRow = property.CreateTableRowNodeWithLink(parameterName);
             node.Table.Body.TableRows.Add(customTableRow);
 
-            const bool isRoot = false;
-            IDocumentationNode root = namedType.CreateDocumentationNode(includeNamespaces, isRoot);
+            IDocumentationNode root = namedType.CreateDocumentationNode(includeNamespaces);
 
-            allNodes.Add((namedType, root));
+            allNodes.Add(root);
 
             // Recurse into child properties using the parameter name as prefix
             RecurseNodes(namedType, visited, root, allNodes, includeNamespaces);

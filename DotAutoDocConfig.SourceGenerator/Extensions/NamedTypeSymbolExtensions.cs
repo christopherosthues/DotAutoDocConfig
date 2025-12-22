@@ -47,17 +47,12 @@ internal static class NamedTypeSymbolExtensions
             return true;
         }
 
-        public IDocumentationNode CreateDocumentationNode(bool includeNamespaces, bool isRoot)
+        public IDocumentationNode CreateDocumentationNode(bool includeNamespaces)
         {
-            DocumentationNode node = new()
+            DocumentationNode node = new(typeSymbol)
             {
-                Title = new TitleNode(isRoot ? "Configuration Documentation" : typeSymbol.FriendlyQualifiedName(includeNamespaces))
+                Title = new TitleNode(typeSymbol.FriendlyQualifiedName(includeNamespaces))
             };
-
-            if (isRoot)
-            {
-                node.Subtitle = new SubtitleNode(typeSymbol.FriendlyQualifiedName(includeNamespaces));
-            }
 
             string summaryContent = typeSymbol.GetSummary();
             if (!string.IsNullOrEmpty(summaryContent))

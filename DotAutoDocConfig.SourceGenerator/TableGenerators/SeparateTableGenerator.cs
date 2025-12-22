@@ -13,13 +13,13 @@ namespace DotAutoDocConfig.SourceGenerator.TableGenerators;
 internal class SeparateTableGenerator : TableGeneratorBase
 {
     public override void GenerateTable(DocumentationOptionsDataModel docOptions, SourceProductionContext context,
-        INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot)
+        INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot, IList<string> filePaths)
     {
         LocalFormat fmt = (LocalFormat)docOptions.Format;
         IDocumentationRenderer documentationRenderer = DocumentationRendererFactory.CreateRenderer(fmt);
         IDocumentationParser documentationParser = new SeparateTableParser();
         bool includeNamespaces = docOptions.IncludeNamespaces;
-        IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> trees = documentationParser.Parse(classSymbol, includeNamespaces);
+        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, includeNamespaces);
 
         string directory = ComposeRootOutputPath(
             context,
@@ -28,11 +28,11 @@ internal class SeparateTableGenerator : TableGeneratorBase
             repoRoot);
         string ext = fmt.ToFileExtension();
         HashSet<string> usedNames = new(StringComparer.OrdinalIgnoreCase);
-        foreach ((INamedTypeSymbol symbol, IDocumentationNode tree) in trees)
+        foreach (IDocumentationNode tree in trees)
         {
             tree.Accept(documentationRenderer);
 
-            string baseName = includeNamespaces ? CreateFileBaseNameWithNamespace(symbol) : symbol.Name;
+            string baseName = includeNamespaces ? CreateFileBaseNameWithNamespace(tree.NamedTypeSymbol) : tree.NamedTypeSymbol.Name;
             string fileName = EnsureUniqueFileName(baseName, ext, usedNames);
             string candidate = Path.Combine(directory, fileName);
 

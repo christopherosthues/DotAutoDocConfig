@@ -13,14 +13,14 @@ namespace DotAutoDocConfig.SourceGenerator.TableGenerators;
 internal class InlineTableGenerator : TableGeneratorBase
 {
     public override void GenerateTable(DocumentationOptionsDataModel docOptions, SourceProductionContext context,
-        INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot)
+        INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot, IList<string> filePaths)
     {
         LocalFormat fmt = (LocalFormat)docOptions.Format;
         IDocumentationRenderer documentationRenderer = DocumentationRendererFactory.CreateRenderer(fmt);
         IDocumentationParser documentationParser = new InlineTableParser();
-        IList<(INamedTypeSymbol Symbol, IDocumentationNode Tree)> trees = documentationParser.Parse(classSymbol, docOptions.IncludeNamespaces);
+        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions.IncludeNamespaces);
 
-        (INamedTypeSymbol symbol, IDocumentationNode tree) = trees.First();
+        IDocumentationNode tree = trees.First();
         tree.Accept(documentationRenderer);
 
         // Resolve root output path and write
@@ -31,9 +31,13 @@ internal class InlineTableGenerator : TableGeneratorBase
             repoRoot);
         string ext = fmt.ToFileExtension();
 
-        string baseName = docOptions.IncludeNamespaces ? CreateFileBaseNameWithNamespace(symbol) : symbol.Name;
+        string baseName = docOptions.IncludeNamespaces ? CreateFileBaseNameWithNamespace(tree.NamedTypeSymbol) : tree.NamedTypeSymbol.Name;
         string candidate = Path.Combine(directory, baseName + ext);
 
+        // TODO: Handle name conflicts
+
         WriteResolvedFile(context, candidate, documentationRenderer.GetResult());
+
+        filePaths.Add(candidate);
     }
 }

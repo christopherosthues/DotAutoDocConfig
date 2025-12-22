@@ -9,9 +9,6 @@ internal class AsciiDocDocumentationRenderer : IDocumentationRenderer
 
     public void RenderTitle(ITitleNode node) => _builder.AppendLine($"= {EscapeAsciiDoc(node.Content)}").AppendLine();
 
-    public void RenderSubtitle(ISubtitleNode node) =>
-        _builder.AppendLine("== " + EscapeAsciiDoc(node.Content)).AppendLine();
-
     public void RenderSummary(ISummaryNode node)
     {
         if (!string.IsNullOrEmpty(node.Content))

@@ -9,9 +9,6 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
 
     public void RenderTitle(ITitleNode node) => _builder.AppendLine($"# {EscapeMarkdown(node.Content)}").AppendLine();
 
-    public void RenderSubtitle(ISubtitleNode node) =>
-        _builder.AppendLine($"## {EscapeMarkdown(node.Content)}").AppendLine();
-
     public void RenderSummary(ISummaryNode node)
     {
         if (!string.IsNullOrEmpty(node.Content))

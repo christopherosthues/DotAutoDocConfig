@@ -6,7 +6,7 @@ namespace DotAutoDocConfig.Sample.Console;
 /// <summary>
 /// Represents application-level configuration options used by the sample console app.
 /// </summary>
-[Documentation(DocumentationFormat.Markdown, "docs/md", ComplexParameterFormat.SeparateTables)]
+[Documentation(DocumentationFormat.Markdown, "docs/md", ComplexParameterFormat.SeparateTables, includeNamespaces: true)]
 [Documentation(DocumentationFormat.AsciiDoc, "docs/asciidoc", includeNamespaces: true)]
 [Documentation(DocumentationFormat.Html, "docs/html", includeNamespaces: false)]
 [Documentation(DocumentationFormat.Html, "docs/html/tables", ComplexParameterFormat.SeparateTables, includeNamespaces: false)]
@@ -59,80 +59,4 @@ public class AppConfiguration
     /// An example of nested configuration.
     /// </summary>
     public SomeNestedConfiguration NestedConfig { get; set; } = new();
-}
-
-/// <summary>
-/// Represents a nested configuration example.
-/// </summary>
-public class SomeNestedConfiguration
-{
-    /// <summary>
-    /// A sample nested property.
-    /// </summary>
-    public string NestedProperty { get; set; } = "NestedValue";
-
-    /// <summary>
-    /// another level of nested configuration
-    /// </summary>
-    public SomeOtherNestedConfiguration Nested { get; set; } = new();
-}
-
-/// <summary>
-/// Represents another nested configuration example.
-/// </summary>
-public class SomeOtherNestedConfiguration
-{
-    /// <summary>
-    /// Another sample nested property.
-    /// </summary>
-    public int AnotherNestedProperty { get; set; } = 42;
-}
-
-/// <summary>
-/// Contains database connection and command execution settings.
-/// </summary>
-public class DatabaseConfiguration
-{
-    /// <summary>
-    /// ADO.NET-compatible connection string used to connect to the database.
-    /// </summary>
-    public string ConnectionString { get; set; } = "Server=localhost;Database=mydb;User Id=myuser;Password=mypassword;";
-
-    /// <summary>
-    /// Maximum number of concurrent connections allowed by the application.
-    /// </summary>
-    /// <example>5</example>
-    public int MaxConnections { get; set; } = 10;
-
-    /// <summary>
-    /// Indicates whether to require SSL/TLS for database connections.
-    /// </summary>
-    [ExcludeFromDocumentation("This property is for internal use only.")]
-    public bool UseSsl { get; set; } = false;
-
-    /// <summary>
-    /// Timeout in seconds applied to database commands.
-    /// </summary>
-    public int CommandTimeout { get; set; } = 60;
-}
-
-/// <summary>
-/// The logging level for application logs.
-/// </summary>
-public enum LogLevel
-{
-    /// <summary>No logging output.</summary>
-    None,
-    /// <summary>Very detailed diagnostic information, potentially high volume.</summary>
-    Trace,
-    /// <summary>Fine-grained events useful for debugging.</summary>
-    Debug,
-    /// <summary>Informational messages that highlight the progress of the application.</summary>
-    Information,
-    /// <summary>Potentially harmful situations that are not necessarily errors.</summary>
-    Warning,
-    /// <summary>Errors that prevent normal execution of a specific operation.</summary>
-    Error,
-    /// <summary>Critical errors causing premature termination or severe failures.</summary>
-    Critical,
 }
