@@ -7,6 +7,8 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
 {
     private readonly StringBuilder _builder = new();
 
+    public void RenderComment(string comment) => _builder.Append("[//]: <> (").Append(comment).AppendLine(")").AppendLine();
+
     public void RenderTitle(ITitleNode node) => _builder.AppendLine($"# {EscapeMarkdown(node.Content)}").AppendLine();
 
     public void RenderSummary(ISummaryNode node)

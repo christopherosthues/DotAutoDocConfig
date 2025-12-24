@@ -4,6 +4,7 @@ namespace DotAutoDocConfig.SourceGenerator.Renderers;
 
 internal interface IDocumentationRenderer
 {
+    void RenderComment(string comment);
     void RenderTitle(ITitleNode node);
     void RenderSummary(ISummaryNode node);
     void RenderTable(ITableNode node);

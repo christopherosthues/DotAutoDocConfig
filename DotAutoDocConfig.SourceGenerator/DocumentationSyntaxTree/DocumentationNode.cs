@@ -1,3 +1,4 @@
+using DotAutoDocConfig.SourceGenerator.Extensions;
 using DotAutoDocConfig.SourceGenerator.Renderers;
 using Microsoft.CodeAnalysis;
 
@@ -7,6 +8,7 @@ internal class DocumentationNode(INamedTypeSymbol namedTypeSymbol) : IDocumentat
 {
     public void Accept(IDocumentationRenderer renderer)
     {
+        renderer.RenderComment(NamedTypeSymbol.FriendlyQualifiedName(true));
         Title.Accept(renderer);
         Summary?.Accept(renderer);
         Table.Accept(renderer);
