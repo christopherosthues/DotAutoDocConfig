@@ -8,7 +8,9 @@ internal class HtmlDocumentationRenderer : IDocumentationRenderer
     private readonly StringBuilder _builder = new();
 
     public void RenderComment(string comment) =>
-        _builder.Append("<!-- ").Append(EscapeHtml(comment)).AppendLine(" -->").AppendLine();
+        _builder.Append("<!-- ").Append(EscapeHtml(comment)).AppendLine(" -->");
+
+    public void RenderLineBreak() => _builder.AppendLine();
 
     public void RenderTitle(ITitleNode node) =>
         _builder.Append("<h1>").Append(EscapeHtml(node.Content)).AppendLine("</h1>").AppendLine();

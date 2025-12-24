@@ -7,7 +7,9 @@ internal class AsciiDocDocumentationRenderer : IDocumentationRenderer
 {
     private readonly StringBuilder _builder = new();
 
-    public void RenderComment(string comment) => _builder.Append("// ").AppendLine(comment).AppendLine();
+    public void RenderComment(string comment) => _builder.Append("// ").AppendLine(comment);
+
+    public void RenderLineBreak() => _builder.AppendLine();
 
     public void RenderTitle(ITitleNode node) => _builder.AppendLine($"= {EscapeAsciiDoc(node.Content)}").AppendLine();
 

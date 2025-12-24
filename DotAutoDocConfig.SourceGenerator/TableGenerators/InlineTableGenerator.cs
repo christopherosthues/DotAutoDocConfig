@@ -18,7 +18,7 @@ internal class InlineTableGenerator : TableGeneratorBase
         LocalFormat fmt = (LocalFormat)docOptions.Format;
         IDocumentationRenderer documentationRenderer = DocumentationRendererFactory.CreateRenderer(fmt);
         IDocumentationParser documentationParser = new InlineTableParser();
-        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions.IncludeNamespaces);
+        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions);
 
         IDocumentationNode tree = trees.First();
         tree.Accept(documentationRenderer);

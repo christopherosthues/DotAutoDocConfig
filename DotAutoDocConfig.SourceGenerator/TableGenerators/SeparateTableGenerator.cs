@@ -19,7 +19,7 @@ internal class SeparateTableGenerator : TableGeneratorBase
         IDocumentationRenderer documentationRenderer = DocumentationRendererFactory.CreateRenderer(fmt);
         IDocumentationParser documentationParser = new SeparateTableParser();
         bool includeNamespaces = docOptions.IncludeNamespaces;
-        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, includeNamespaces);
+        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions);
 
         string directory = ComposeRootOutputPath(
             context,

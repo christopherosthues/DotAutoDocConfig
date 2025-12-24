@@ -12,4 +12,9 @@ internal class DocumentationOptionsDataModel
 
     // New: whether to include namespaces in headings/labels
     public bool IncludeNamespaces { get; set; }
+
+    public override string ToString() =>
+        $"Format={(LocalFormat)Format}, " +
+        $"ComplexParameterFormat={(ComplexParameterFormat)ComplexParameterFormat}, " +
+        $"IncludeNamespaces={IncludeNamespaces}";
 }

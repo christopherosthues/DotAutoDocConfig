@@ -1,5 +1,6 @@
 ﻿using System;
 using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
+using DotAutoDocConfig.SourceGenerator.Models;
 using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.Extensions;
@@ -47,11 +48,11 @@ internal static class NamedTypeSymbolExtensions
             return true;
         }
 
-        public IDocumentationNode CreateDocumentationNode(bool includeNamespaces)
+        public IDocumentationNode CreateDocumentationNode(DocumentationOptionsDataModel options)
         {
-            DocumentationNode node = new(typeSymbol)
+            DocumentationNode node = new(typeSymbol, options)
             {
-                Title = new TitleNode(typeSymbol.FriendlyQualifiedName(includeNamespaces))
+                Title = new TitleNode(typeSymbol.FriendlyQualifiedName(options.IncludeNamespaces))
             };
 
             string summaryContent = typeSymbol.GetSummary();

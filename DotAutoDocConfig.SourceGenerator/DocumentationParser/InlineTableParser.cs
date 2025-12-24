@@ -2,17 +2,18 @@ using System.Collections.Generic;
 using System.Linq;
 using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 using DotAutoDocConfig.SourceGenerator.Extensions;
+using DotAutoDocConfig.SourceGenerator.Models;
 using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 
 internal class InlineTableParser : IDocumentationParser
 {
-    public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces)
+    public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, DocumentationOptionsDataModel options)
     {
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
-        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(includeNamespaces);
+        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(options);
 
         RecurseNodes(namedTypeSymbol, string.Empty, visited, root);
 

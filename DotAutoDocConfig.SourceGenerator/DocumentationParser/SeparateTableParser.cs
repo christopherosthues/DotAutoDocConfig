@@ -2,29 +2,29 @@ using System.Collections.Generic;
 using System.Linq;
 using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 using DotAutoDocConfig.SourceGenerator.Extensions;
+using DotAutoDocConfig.SourceGenerator.Models;
 using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 
 internal class SeparateTableParser : IDocumentationParser
 {
-    public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, bool includeNamespaces)
+    public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, DocumentationOptionsDataModel options)
     {
         List<IDocumentationNode> allNodes = [];
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
-        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(includeNamespaces);
+        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(options);
 
         allNodes.Add(root);
 
-        RecurseNodes(namedTypeSymbol, visited, root, allNodes, includeNamespaces);
+        RecurseNodes(namedTypeSymbol, visited, root, allNodes, options);
 
         return allNodes;
     }
 
     private static void RecurseNodes(INamedTypeSymbol? current, HashSet<INamedTypeSymbol> visited,
-        IDocumentationNode node, IList<IDocumentationNode> allNodes,
-        bool includeNamespaces)
+        IDocumentationNode node, IList<IDocumentationNode> allNodes, DocumentationOptionsDataModel options)
     {
         if (current is null)
         {
@@ -38,13 +38,13 @@ internal class SeparateTableParser : IDocumentationParser
 
         foreach (IPropertySymbol member in current.GetMembers().OfType<IPropertySymbol>())
         {
-            ParseProperty(visited, node, member, allNodes, includeNamespaces);
+            ParseProperty(visited, node, member, allNodes, options);
         }
     }
 
     private static void ParseProperty(HashSet<INamedTypeSymbol> visited,
         IDocumentationNode node, IPropertySymbol property,
-        IList<IDocumentationNode> allNodes, bool includeNamespaces)
+        IList<IDocumentationNode> allNodes, DocumentationOptionsDataModel options)
     {
         // Only public properties
         if (property.DeclaredAccessibility != Accessibility.Public)
@@ -85,12 +85,12 @@ internal class SeparateTableParser : IDocumentationParser
             ITableRowNode customTableRow = property.CreateTableRowNodeWithLink(parameterName);
             node.Table.Body.TableRows.Add(customTableRow);
 
-            IDocumentationNode root = namedType.CreateDocumentationNode(includeNamespaces);
+            IDocumentationNode root = namedType.CreateDocumentationNode(options);
 
             allNodes.Add(root);
 
             // Recurse into child properties using the parameter name as prefix
-            RecurseNodes(namedType, visited, root, allNodes, includeNamespaces);
+            RecurseNodes(namedType, visited, root, allNodes, options);
             return;
         }
 
