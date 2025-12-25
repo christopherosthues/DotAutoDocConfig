@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 using DotAutoDocConfig.SourceGenerator.Extensions;
@@ -10,11 +11,18 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 internal class InlineTableParser : IDocumentationParser
 {
     public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, DocumentationOptionsDataModel options,
-        IList<string> filePaths)
+        string directory, ISet<string> filePaths)
     {
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
-        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(options);
+        // TODO: file path
+        string ext = options.Format.ToFileExtension();
+        string baseName = options.IncludeNamespaces ? namedTypeSymbol.CreateFileBaseNameWithNamespace() : namedTypeSymbol.Name;
+        string filePath = Path.Combine(directory, baseName + ext);
+
+        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(options, filePath);
+
+        filePaths.Add(filePath);
 
         RecurseNodes(namedTypeSymbol, string.Empty, visited, root);
 

@@ -11,44 +11,7 @@ namespace DotAutoDocConfig.SourceGenerator.TableGenerators;
 internal abstract class TableGeneratorBase : ITableGenerator
 {
     public abstract void GenerateTable(DocumentationOptionsDataModel docOptions, SourceProductionContext context,
-        INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot, IList<string> filePaths);
-
-    protected static string CreateFileBaseNameWithNamespace(INamedTypeSymbol symbol)
-    {
-        string fq = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat); // e.g., global::Namespace.Type
-        if (fq.StartsWith("global::"))
-        {
-            fq = fq.Substring("global::".Length);
-        }
-
-        StringBuilder sbName = new();
-        foreach (char c in fq)
-        {
-            if (char.IsLetterOrDigit(c))
-            {
-                sbName.Append(c);
-            }
-            else if (c == '.' || c == '_' || c == '+')
-            {
-                sbName.Append('-');
-            }
-        }
-
-        return sbName.ToString();
-    }
-
-    protected static string EnsureUniqueFileName(string baseName, string ext, HashSet<string> usedNames)
-    {
-        string candidate = baseName + ext;
-        int i = 2;
-        while (!usedNames.Add(candidate))
-        {
-            candidate = baseName + "-" + i + ext;
-            i++;
-        }
-
-        return candidate;
-    }
+        INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot, ISet<string> filePaths);
 
     protected static void WriteResolvedFile(SourceProductionContext context, string fullPath, string content)
     {

@@ -84,14 +84,4 @@ internal class AsciiDocDocumentationRenderer : IDocumentationRenderer
         .Append(EscapeAsciiDoc(node.Content)).Append("]");
 
     public void RenderText(ITextNode node) => _builder.Append(EscapeAsciiDoc(node.Content));
-
-    // private static string LinkToFile(string text, INamedTypeSymbol target, Dictionary<INamedTypeSymbol, string> typeToFileName)
-    // {
-    //     string name = row.ComplexTarget is null
-    //         ? model.ParameterName
-    //         : LinkToFile(model.ParameterName, row.ComplexTarget!, typeToFileName);
-    //
-    //     string fileName = typeToFileName[target];
-    //     return $"xref:{fileName}[{text}]";
-    // }
 }

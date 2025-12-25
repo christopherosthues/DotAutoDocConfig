@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 using DotAutoDocConfig.SourceGenerator.Models;
 using Microsoft.CodeAnalysis;
@@ -68,6 +69,30 @@ internal static class NamedTypeSymbolExtensions
             node.Table.Header.TableHeaderRow.TableHeaderDataNodes.Add(new TableHeaderDataNode("Description"));
 
             return node;
+        }
+
+        public string CreateFileBaseNameWithNamespace()
+        {
+            string fq = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat); // e.g., global::Namespace.Type
+            if (fq.StartsWith("global::"))
+            {
+                fq = fq.Substring("global::".Length);
+            }
+
+            StringBuilder sbName = new();
+            foreach (char c in fq)
+            {
+                if (char.IsLetterOrDigit(c))
+                {
+                    sbName.Append(c);
+                }
+                else if (c == '.' || c == '_' || c == '+')
+                {
+                    sbName.Append('-');
+                }
+            }
+
+            return sbName.ToString();
         }
     }
 }

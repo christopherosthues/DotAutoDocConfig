@@ -57,7 +57,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
     private static void GenerateCode(SourceProductionContext context, Compilation compilation,
         ImmutableArray<ClassDeclarationSyntax> classDeclarations, string projectDirectory)
     {
-        IList<string> filePaths = [];
+        ISet<string> filePaths = new HashSet<string>();
 
         // Go through all filtered class declarations.
         foreach (ClassDeclarationSyntax classDeclarationSyntax in classDeclarations)

@@ -107,14 +107,4 @@ internal class HtmlDocumentationRenderer : IDocumentationRenderer
             .Append("</a>");
 
     public void RenderText(ITextNode node) => _builder.Append(EscapeHtml(node.Content));
-
-    // private static string LinkToFile(string text, INamedTypeSymbol target, Dictionary<INamedTypeSymbol, string> typeToFileName)
-    // {
-    //     string name = row.ComplexTarget is null
-    //         ? model.ParameterName
-    //         : LinkToFile(model.ParameterName, row.ComplexTarget!, typeToFileName);
-    //
-    //     string fileName = typeToFileName[target];
-    //     return $"<a href=\"{fileName}\">{Escape(text)}</a>";
-    // }
 }

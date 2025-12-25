@@ -119,14 +119,4 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
         .Append(node.Href).Append(")");
 
     public void RenderText(ITextNode node) => _builder.Append(EscapeMarkdown(node.Content));
-
-    // private static string LinkToFile(string text, INamedTypeSymbol target, Dictionary<INamedTypeSymbol, string> typeToFileName)
-    // {
-    //     string name = row.ComplexTarget is null
-    //         ? model.ParameterName
-    //         : LinkToFile(model.ParameterName, row.ComplexTarget!, typeToFileName);
-    //
-    //     string fileName = typeToFileName[target];
-    //     return $"[{text}]({fileName})";
-    // }
 }

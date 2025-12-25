@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 using DotAutoDocConfig.SourceGenerator.Extensions;
@@ -10,22 +11,30 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 internal class SeparateTableParser : IDocumentationParser
 {
     public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, DocumentationOptionsDataModel options,
-        IList<string> filePaths)
+        string directory, ISet<string> filePaths)
     {
         List<IDocumentationNode> allNodes = [];
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 
-        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(options);
+        // TODO: file path
+        string ext = options.Format.ToFileExtension();
+        string baseName = options.IncludeNamespaces ? namedTypeSymbol.CreateFileBaseNameWithNamespace() : namedTypeSymbol.Name;
+        string fileName = baseName.EnsureUniqueFileName(ext, filePaths);
+        string filePath = Path.Combine(directory, fileName);
 
+        IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(options, filePath);
+
+        filePaths.Add(filePath);
         allNodes.Add(root);
 
-        RecurseNodes(namedTypeSymbol, visited, root, allNodes, options);
+        RecurseNodes(namedTypeSymbol, visited, root, allNodes, options, directory, filePaths);
 
         return allNodes;
     }
 
     private static void RecurseNodes(INamedTypeSymbol? current, HashSet<INamedTypeSymbol> visited,
-        IDocumentationNode node, IList<IDocumentationNode> allNodes, DocumentationOptionsDataModel options)
+        IDocumentationNode node, IList<IDocumentationNode> allNodes, DocumentationOptionsDataModel options,
+        string directory, ISet<string> filePaths)
     {
         if (current is null)
         {
@@ -39,13 +48,14 @@ internal class SeparateTableParser : IDocumentationParser
 
         foreach (IPropertySymbol member in current.GetMembers().OfType<IPropertySymbol>())
         {
-            ParseProperty(visited, node, member, allNodes, options);
+            ParseProperty(visited, node, member, allNodes, options, directory, filePaths);
         }
     }
 
     private static void ParseProperty(HashSet<INamedTypeSymbol> visited,
         IDocumentationNode node, IPropertySymbol property,
-        IList<IDocumentationNode> allNodes, DocumentationOptionsDataModel options)
+        IList<IDocumentationNode> allNodes, DocumentationOptionsDataModel options,
+        string directory, ISet<string> filePaths)
     {
         // Only public properties
         if (property.DeclaredAccessibility != Accessibility.Public)
@@ -83,15 +93,23 @@ internal class SeparateTableParser : IDocumentationParser
         // If the property type is a class/record (and not system/primitive), recurse into it
         if (propertyType is INamedTypeSymbol namedType && namedType.IsCustomClass())
         {
-            ITableRowNode customTableRow = property.CreateTableRowNodeWithLink(parameterName);
+            // TODO: file path
+            string ext = options.Format.ToFileExtension();
+            string baseName = options.IncludeNamespaces ? namedType.CreateFileBaseNameWithNamespace() : namedType.Name;
+            string fileName = baseName.EnsureUniqueFileName(ext, filePaths);
+            string filePath = Path.Combine(directory, fileName);
+
+            ITableRowNode customTableRow = property.CreateTableRowNodeWithLink(parameterName, filePath);
             node.Table.Body.TableRows.Add(customTableRow);
 
-            IDocumentationNode root = namedType.CreateDocumentationNode(options);
+            IDocumentationNode root = namedType.CreateDocumentationNode(options, filePath);
+
+            filePaths.Add(filePath);
 
             allNodes.Add(root);
 
             // Recurse into child properties using the parameter name as prefix
-            RecurseNodes(namedType, visited, root, allNodes, options);
+            RecurseNodes(namedType, visited, root, allNodes, options, directory, filePaths);
             return;
         }
 

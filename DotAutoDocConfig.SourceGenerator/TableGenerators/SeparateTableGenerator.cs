@@ -13,31 +13,25 @@ namespace DotAutoDocConfig.SourceGenerator.TableGenerators;
 internal class SeparateTableGenerator : TableGeneratorBase
 {
     public override void GenerateTable(DocumentationOptionsDataModel docOptions, SourceProductionContext context,
-        INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot, IList<string> filePaths)
+        INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot, ISet<string> filePaths)
     {
         LocalFormat fmt = docOptions.Format;
         IDocumentationRenderer documentationRenderer = DocumentationRendererFactory.CreateRenderer(fmt);
         IDocumentationParser documentationParser = new SeparateTableParser();
-        bool includeNamespaces = docOptions.IncludeNamespaces;
-        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions, filePaths);
-
         string directory = ComposeRootOutputPath(
             context,
             docOptions.OutputDirectory,
             projectDirectory,
             repoRoot);
-        string ext = fmt.ToFileExtension();
+        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions, directory, filePaths);
+
         HashSet<string> usedNames = new(StringComparer.OrdinalIgnoreCase);
         foreach (IDocumentationNode tree in trees)
         {
             tree.Accept(documentationRenderer);
 
-            string baseName = includeNamespaces ? CreateFileBaseNameWithNamespace(tree.NamedTypeSymbol) : tree.NamedTypeSymbol.Name;
-            string fileName = EnsureUniqueFileName(baseName, ext, usedNames);
-            string candidate = Path.Combine(directory, fileName);
-
             // Write root file
-            WriteResolvedFile(context, candidate, documentationRenderer.GetResult());
+            WriteResolvedFile(context, tree.OutputFilePath, documentationRenderer.GetResult());
 
             documentationRenderer.Clear();
         }
