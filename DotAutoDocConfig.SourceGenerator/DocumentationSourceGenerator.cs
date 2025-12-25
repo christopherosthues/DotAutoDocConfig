@@ -93,7 +93,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
                 context.LogInfo("ComplexParameterFormat: {0}", docOptions.ComplexParameterFormat);
 #pragma warning restore CS8620
 
-                ComplexParameterFormat complexFmt = (ComplexParameterFormat)docOptions.ComplexParameterFormat;
+                ComplexParameterFormat complexFmt = docOptions.ComplexParameterFormat;
                 ITableGenerator tableGenerator = TableGeneratorFactory.CreateGenerator(complexFmt);
 
                 tableGenerator.GenerateTable(docOptions, context, classSymbol, projectDirectory, repoRoot, filePaths);
@@ -131,37 +131,37 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
             }
 
             // Read numeric value of the enum (as byte/int) to avoid referencing the external enum type.
-            byte formatValue = 0;
+            LocalFormat formatValue = LocalFormat.AsciiDoc;
             object? raw = attributeData.ConstructorArguments[0].Value;
             if (raw is int intVal)
             {
-                formatValue = (byte)intVal;
+                formatValue = (LocalFormat)intVal;
             }
             else if (raw is byte bVal)
             {
-                formatValue = bVal;
+                formatValue = (LocalFormat)bVal;
             }
 
             string outputPath = attributeData.ConstructorArguments[1].Value!.ToString() ?? string.Empty;
 
             // Optional third argument: ComplexParameterFormat
-            byte complexFormat = 0; // default InlineJsonShort
+            ComplexParameterFormat complexFormat = ComplexParameterFormat.InlineJsonShort;
             if (attributeData.ConstructorArguments.Length >= 3)
             {
                 object? rawComplex = attributeData.ConstructorArguments[2].Value;
                 if (rawComplex is int ci)
                 {
-                    complexFormat = (byte)ci;
+                    complexFormat = (ComplexParameterFormat)ci;
                 }
                 else if (rawComplex is byte cb)
                 {
-                    complexFormat = cb;
+                    complexFormat = (ComplexParameterFormat)cb;
                 }
             }
 
             // Optional fourth argument: includeNamespaces (bool)
             bool includeNamespaces = false;
-            if (attributeData.ConstructorArguments.Length >= 4 && attributeData.ConstructorArguments[3].Value is bool b)
+            if (attributeData.ConstructorArguments is [_, _, _, { Value: bool b } _, ..])
             {
                 includeNamespaces = b;
             }

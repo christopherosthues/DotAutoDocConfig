@@ -15,11 +15,11 @@ internal class SeparateTableGenerator : TableGeneratorBase
     public override void GenerateTable(DocumentationOptionsDataModel docOptions, SourceProductionContext context,
         INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot, IList<string> filePaths)
     {
-        LocalFormat fmt = (LocalFormat)docOptions.Format;
+        LocalFormat fmt = docOptions.Format;
         IDocumentationRenderer documentationRenderer = DocumentationRendererFactory.CreateRenderer(fmt);
         IDocumentationParser documentationParser = new SeparateTableParser();
         bool includeNamespaces = docOptions.IncludeNamespaces;
-        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions);
+        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions, filePaths);
 
         string directory = ComposeRootOutputPath(
             context,

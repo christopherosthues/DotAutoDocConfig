@@ -5,7 +5,10 @@ using Microsoft.CodeAnalysis;
 
 namespace DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 
-internal class DocumentationNode(INamedTypeSymbol namedTypeSymbol, DocumentationOptionsDataModel options) : IDocumentationNode
+internal class DocumentationNode(
+    INamedTypeSymbol namedTypeSymbol,
+    DocumentationOptionsDataModel options,
+    string outputFilePath) : IDocumentationNode
 {
     public void Accept(IDocumentationRenderer renderer)
     {
@@ -13,13 +16,15 @@ internal class DocumentationNode(INamedTypeSymbol namedTypeSymbol, Documentation
         renderer.RenderComment(NamedTypeSymbol.FriendlyQualifiedName(true));
         renderer.RenderComment($"Options: {Options}");
         renderer.RenderLineBreak();
+
         Title.Accept(renderer);
         Summary?.Accept(renderer);
         Table.Accept(renderer);
     }
 
-    public INamedTypeSymbol NamedTypeSymbol { get; set; } = namedTypeSymbol;
-    public DocumentationOptionsDataModel Options { get; set; } = options;
+    public INamedTypeSymbol NamedTypeSymbol { get; } = namedTypeSymbol;
+    public string OutputFilePath { get; } = outputFilePath;
+    private DocumentationOptionsDataModel Options { get; } = options;
     public ITitleNode Title { get; set; } = new TitleNode(string.Empty);
     public ISummaryNode? Summary { get; set; }
     public ITableNode Table { get; set; } = new TableNode();

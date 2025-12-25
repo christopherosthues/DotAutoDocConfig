@@ -43,28 +43,27 @@ internal static class PropertySymbolExtensions
         public ITableRowNode CreateTableRowNode(string parameterName)
         {
             ITableRowNode tableRow = new TableRowNode();
-            tableRow.DataNodes.Add(new TableDataNode(parameterName));
-            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
-            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.GetDefaultValue()));
-            tableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(propertySymbol.GetExampleFromXml())
+            tableRow.DataNodes.Add(new TableDataNode(new TextNode(parameterName)));
+            tableRow.DataNodes.Add(new TableDataNode(new TextNode(propertySymbol.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat))));
+            tableRow.DataNodes.Add(new TableDataNode(new TextNode(propertySymbol.GetDefaultValue())));
+            tableRow.DataNodes.Add(new TableDataNode(new TextNode(string.IsNullOrEmpty(propertySymbol.GetExampleFromXml())
                 ? propertySymbol.Type.GetExampleValue()
-                : propertySymbol.GetExampleFromXml()));
-            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.GetSummary()));
+                : propertySymbol.GetExampleFromXml())));
+            tableRow.DataNodes.Add(new TableDataNode(new TextNode(propertySymbol.GetSummary())));
 
             return tableRow;
         }
 
-        public ITableRowNode CreateTableRowNodeWithLink(string parameterName)
+        public ITableRowNode CreateTableRowNodeWithLink(string parameterName, string filePath)
         {
             ITableRowNode tableRow = new TableRowNode();
-            tableRow.DataNodes.Add(new TableDataNode(parameterName));
-            // TODO: file link for complex types
-            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
-            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.GetDefaultValue()));
-            tableRow.DataNodes.Add(new TableDataNode(string.IsNullOrEmpty(propertySymbol.GetExampleFromXml())
+            tableRow.DataNodes.Add(new TableDataNode(new TextNode(parameterName)));
+            tableRow.DataNodes.Add(new TableDataNode(new LinkNode(filePath, propertySymbol.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat))));
+            tableRow.DataNodes.Add(new TableDataNode(new TextNode(propertySymbol.GetDefaultValue())));
+            tableRow.DataNodes.Add(new TableDataNode(new TextNode(string.IsNullOrEmpty(propertySymbol.GetExampleFromXml())
                 ? propertySymbol.Type.GetExampleValue()
-                : propertySymbol.GetExampleFromXml()));
-            tableRow.DataNodes.Add(new TableDataNode(propertySymbol.GetSummary()));
+                : propertySymbol.GetExampleFromXml())));
+            tableRow.DataNodes.Add(new TableDataNode(new TextNode(propertySymbol.GetSummary())));
             return tableRow;
         }
     }

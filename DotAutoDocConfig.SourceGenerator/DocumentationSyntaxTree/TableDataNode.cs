@@ -2,9 +2,9 @@ using DotAutoDocConfig.SourceGenerator.Renderers;
 
 namespace DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 
-internal class TableDataNode(string content) : ITableDataNode
+internal class TableDataNode(ILeafNode content) : ITableDataNode
 {
     public void Accept(IDocumentationRenderer renderer) => renderer.RenderTableData(this);
 
-    public string Content { get; } = content;
+    public ILeafNode Content { get; } = content;
 }

@@ -84,8 +84,12 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
         _builder.AppendLine();
     }
 
-    public void RenderTableData(ITableDataNode node) =>
-        _builder.Append(" ").Append(EscapeMarkdown(node.Content)).Append(" |");
+    public void RenderTableData(ITableDataNode node)
+    {
+        _builder.Append(" ");
+        node.Content.Accept(this);
+        _builder.Append(" |");
+    }
 
     public string GetResult() => _builder.ToString();
 
@@ -110,6 +114,11 @@ internal class MarkdownDocumentationRenderer : IDocumentationRenderer
             .Replace("!", "\\!")
             .Replace("|", "\\|");
     }
+
+    public void RenderLink(ILinkNode node) => _builder.Append("[").Append(EscapeMarkdown(node.Content)).Append("](")
+        .Append(node.Href).Append(")");
+
+    public void RenderText(ITextNode node) => _builder.Append(EscapeMarkdown(node.Content));
 
     // private static string LinkToFile(string text, INamedTypeSymbol target, Dictionary<INamedTypeSymbol, string> typeToFileName)
     // {

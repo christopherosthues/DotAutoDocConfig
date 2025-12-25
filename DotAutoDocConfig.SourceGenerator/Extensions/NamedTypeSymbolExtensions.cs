@@ -48,9 +48,9 @@ internal static class NamedTypeSymbolExtensions
             return true;
         }
 
-        public IDocumentationNode CreateDocumentationNode(DocumentationOptionsDataModel options)
+        public IDocumentationNode CreateDocumentationNode(DocumentationOptionsDataModel options, string outputFilePath)
         {
-            DocumentationNode node = new(typeSymbol, options)
+            DocumentationNode node = new(typeSymbol, options, outputFilePath)
             {
                 Title = new TitleNode(typeSymbol.FriendlyQualifiedName(options.IncludeNamespaces))
             };

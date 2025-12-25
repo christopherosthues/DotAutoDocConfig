@@ -9,7 +9,8 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 
 internal class InlineTableParser : IDocumentationParser
 {
-    public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, DocumentationOptionsDataModel options)
+    public IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, DocumentationOptionsDataModel options,
+        IList<string> filePaths)
     {
         HashSet<INamedTypeSymbol> visited = new(SymbolEqualityComparer.Default);
 

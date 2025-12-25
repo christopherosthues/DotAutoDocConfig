@@ -80,9 +80,9 @@ internal class HtmlDocumentationRenderer : IDocumentationRenderer
 
     public void RenderTableData(ITableDataNode node)
     {
-        _builder.Append("<td>")
-            .Append(EscapeHtml(node.Content))
-            .AppendLine("</td>");
+        _builder.Append("<td>");
+        node.Content.Accept(this);
+        _builder.AppendLine("</td>");
     }
 
     public string GetResult() => _builder.ToString();
@@ -98,6 +98,15 @@ internal class HtmlDocumentationRenderer : IDocumentationRenderer
 
         return System.Net.WebUtility.HtmlEncode(input) ?? string.Empty;
     }
+
+    public void RenderLink(ILinkNode node) =>
+        _builder.Append("<a href=\"")
+            .Append(EscapeHtml(node.Href))
+            .Append("\">")
+            .Append(EscapeHtml(node.Content))
+            .Append("</a>");
+
+    public void RenderText(ITextNode node) => _builder.Append(EscapeHtml(node.Content));
 
     // private static string LinkToFile(string text, INamedTypeSymbol target, Dictionary<INamedTypeSymbol, string> typeToFileName)
     // {

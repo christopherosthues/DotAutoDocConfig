@@ -7,5 +7,6 @@ namespace DotAutoDocConfig.SourceGenerator.DocumentationParser;
 
 internal interface IDocumentationParser
 {
-    IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, DocumentationOptionsDataModel options);
+    IList<IDocumentationNode> Parse(INamedTypeSymbol namedTypeSymbol, DocumentationOptionsDataModel options,
+        IList<string> filePaths);
 }

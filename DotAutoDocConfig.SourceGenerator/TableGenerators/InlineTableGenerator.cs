@@ -15,10 +15,10 @@ internal class InlineTableGenerator : TableGeneratorBase
     public override void GenerateTable(DocumentationOptionsDataModel docOptions, SourceProductionContext context,
         INamedTypeSymbol classSymbol, string projectDirectory, string repoRoot, IList<string> filePaths)
     {
-        LocalFormat fmt = (LocalFormat)docOptions.Format;
+        LocalFormat fmt = docOptions.Format;
         IDocumentationRenderer documentationRenderer = DocumentationRendererFactory.CreateRenderer(fmt);
         IDocumentationParser documentationParser = new InlineTableParser();
-        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions);
+        IList<IDocumentationNode> trees = documentationParser.Parse(classSymbol, docOptions, filePaths);
 
         IDocumentationNode tree = trees.First();
         tree.Accept(documentationRenderer);

@@ -1,3 +1,6 @@
 namespace DotAutoDocConfig.SourceGenerator.DocumentationSyntaxTree;
 
-internal interface ITableDataNode : ILeafNode;
+internal interface ITableDataNode : INode
+{
+    public ILeafNode Content { get; }
+}

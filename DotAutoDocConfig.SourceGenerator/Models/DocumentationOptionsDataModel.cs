@@ -3,10 +3,10 @@ namespace DotAutoDocConfig.SourceGenerator.Models;
 internal class DocumentationOptionsDataModel
 {
     // Use byte for format to avoid referencing the external DocumentationFormat enum from DotAutoDocConfig.Core
-    public byte Format { get; set; }
+    public LocalFormat Format { get; set; }
 
     // Use byte to avoid referencing ComplexParameterFormat from the Core project
-    public byte ComplexParameterFormat { get; set; }
+    public ComplexParameterFormat ComplexParameterFormat { get; set; }
 
     public string OutputDirectory { get; set; } = null!;
 
@@ -14,7 +14,7 @@ internal class DocumentationOptionsDataModel
     public bool IncludeNamespaces { get; set; }
 
     public override string ToString() =>
-        $"Format={(LocalFormat)Format}, " +
-        $"ComplexParameterFormat={(ComplexParameterFormat)ComplexParameterFormat}, " +
+        $"Format={Format}, " +
+        $"ComplexParameterFormat={ComplexParameterFormat}, " +
         $"IncludeNamespaces={IncludeNamespaces}";
 }

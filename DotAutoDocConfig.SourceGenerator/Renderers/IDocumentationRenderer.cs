@@ -15,6 +15,8 @@ internal interface IDocumentationRenderer
     void RenderTableBody(ITableBodyNode node);
     void RenderTableBodyRow(ITableRowNode node);
     void RenderTableData(ITableDataNode node);
+    void RenderLink(ILinkNode node);
+    void RenderText(ITextNode node);
     string GetResult();
     void Clear();
 }

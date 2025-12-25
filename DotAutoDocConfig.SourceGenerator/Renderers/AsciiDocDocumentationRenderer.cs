@@ -61,8 +61,12 @@ internal class AsciiDocDocumentationRenderer : IDocumentationRenderer
         _builder.AppendLine();
     }
 
-    public void RenderTableData(ITableDataNode node) =>
-        _builder.Append("| ").Append(EscapeAsciiDoc(node.Content)).AppendLine();
+    public void RenderTableData(ITableDataNode node)
+    {
+        _builder.Append("| ");
+        node.Content.Accept(this);
+        _builder.AppendLine();
+    }
 
     public string GetResult() => _builder.ToString();
 
@@ -75,6 +79,11 @@ internal class AsciiDocDocumentationRenderer : IDocumentationRenderer
             .Replace("\n", " ")
             .Replace("\r", " ");
     }
+
+    public void RenderLink(ILinkNode node) => _builder.Append("xref:").Append(node.Href).Append("[")
+        .Append(EscapeAsciiDoc(node.Content)).Append("]");
+
+    public void RenderText(ITextNode node) => _builder.Append(EscapeAsciiDoc(node.Content));
 
     // private static string LinkToFile(string text, INamedTypeSymbol target, Dictionary<INamedTypeSymbol, string> typeToFileName)
     // {
