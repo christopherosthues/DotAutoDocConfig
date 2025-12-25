@@ -18,7 +18,8 @@ internal class InlineTableParser : IDocumentationParser
         // TODO: file path
         string ext = options.Format.ToFileExtension();
         string baseName = options.IncludeNamespaces ? namedTypeSymbol.CreateFileBaseNameWithNamespace() : namedTypeSymbol.Name;
-        string filePath = Path.Combine(directory, baseName + ext);
+        string fileName = baseName.EnsureUniqueFileName(ext, filePaths);
+        string filePath = Path.Combine(directory, fileName);
 
         IDocumentationNode root = namedTypeSymbol.CreateDocumentationNode(options, filePath);
 

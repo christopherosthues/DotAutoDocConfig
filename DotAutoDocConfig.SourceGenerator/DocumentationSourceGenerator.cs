@@ -161,7 +161,7 @@ public class DocumentationSourceGenerator : IIncrementalGenerator
 
             // Optional fourth argument: includeNamespaces (bool)
             bool includeNamespaces = false;
-            if (attributeData.ConstructorArguments is [_, _, _, { Value: bool b } _, ..])
+            if (attributeData.ConstructorArguments.Length >= 4 && attributeData.ConstructorArguments[3].Value is bool b)
             {
                 includeNamespaces = b;
             }

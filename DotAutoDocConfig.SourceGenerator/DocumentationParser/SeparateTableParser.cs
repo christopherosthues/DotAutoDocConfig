@@ -99,7 +99,7 @@ internal class SeparateTableParser : IDocumentationParser
             string fileName = baseName.EnsureUniqueFileName(ext, filePaths);
             string filePath = Path.Combine(directory, fileName);
 
-            ITableRowNode customTableRow = property.CreateTableRowNodeWithLink(parameterName, filePath);
+            ITableRowNode customTableRow = property.CreateTableRowNodeWithLink(parameterName, fileName);
             node.Table.Body.TableRows.Add(customTableRow);
 
             IDocumentationNode root = namedType.CreateDocumentationNode(options, filePath);
